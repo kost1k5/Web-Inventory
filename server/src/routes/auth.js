@@ -17,7 +17,12 @@ router.get('/google/callback',
       req.logout(() => {});
       return res.redirect(`${FRONTEND_URL}/login?error=blocked`);
     }
-    res.redirect(`${FRONTEND_URL}/dashboard`);
+    // Явно сохраняем сессию в PostgreSQL перед редиректом
+    // (без этого redirect может уйти до того как async-запись в БД завершится)
+    req.session.save((err) => {
+      if (err) console.error('Session save error:', err);
+      res.redirect(`${FRONTEND_URL}/dashboard`);
+    });
   }
 );
 
@@ -49,7 +54,11 @@ router.get('/github/callback',
       req.logout(() => {});
       return res.redirect(`${FRONTEND_URL}/login?error=blocked`);
     }
-    res.redirect(`${FRONTEND_URL}/dashboard`);
+    // Явно сохраняем сессию в PostgreSQL перед редиректом
+    req.session.save((err) => {
+      if (err) console.error('Session save error:', err);
+      res.redirect(`${FRONTEND_URL}/dashboard`);
+    });
   }
 );
 
