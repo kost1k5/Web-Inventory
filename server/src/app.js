@@ -70,6 +70,10 @@ const authRouter = require('./routes/auth');
 const adminRouter = require('./routes/admin');
 
 const app = express();
+
+// Render/Heroku/etc работают за reverse proxy — без этого secure cookies не ставятся
+app.set('trust proxy', 1);
+
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
