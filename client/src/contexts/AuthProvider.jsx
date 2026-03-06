@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { AuthContext } from './AuthContext';
 
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://web-inventory.onrender.com/api';
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const checkAuth = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/me', {
+      const response = await fetch(`${BASE_URL}/auth/me`, {
         credentials: 'include',
       });
 
@@ -27,7 +29,7 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/logout', {
+      const response = await fetch(`${BASE_URL}/auth/logout`, {
         method: 'POST', // ← Отправляем команду серверу "выйди"
         credentials: 'include', // ← Отправляем куки с сессией
       });

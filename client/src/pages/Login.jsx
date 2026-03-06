@@ -5,7 +5,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect} from 'react';
 import { useTranslation } from 'react-i18next';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://web-inventory.onrender.com/api';
 const AUTH_BASE = API_URL.replace('/api', '');
 
 export function Login() {
