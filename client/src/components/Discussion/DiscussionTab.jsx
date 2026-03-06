@@ -17,7 +17,7 @@ export function DiscussionTab({ inventoryId, user }) {
   
   // WebSocket подключение при открытии страницы
   useEffect(() => {
-    const SERVER_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace('/api', '');
+    const SERVER_URL = (import.meta.env.VITE_API_URL || 'https://web-inventory.onrender.com/api').replace('/api', '');
     const newSocket = io(SERVER_URL);
     setSocket(newSocket);
     
