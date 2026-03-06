@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
 const pgSession = require('connect-pg-simple')(session);
+const { Pool } = require('pg');
 const path = require('path');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -72,7 +73,10 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: /^http:\/\/localhost:\d+$/,
+    origin: [
+      process.env.FRONTEND_URL,
+      /^http:\/\/localhost:\d+$/,
+    ].filter(Boolean),
     credentials: true,
   },
 });
@@ -98,29 +102,28 @@ app.use(cors({
 app.use(express.json());      // Парсим JSON из тела запросов
 app.use('/api/upload', uploadsRouter);
 // 2. Управление сессиями
-// express-session хранит информацию о залогиненном пользователе
-// Для production нужно использовать store (например, connect-postgres)
-// Для dev используем встроенную Memory-store (она сбрасывается при перезапуске)
+// pg.Pool с явным SSL для Neon/Render (conString не поддерживает ssl-опции напрямую)
+const pgPool = new Pool(
+  process.env.DATABASE_URL
+    ? {
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false },
+      }
+    : {
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        host: process.env.DB_HOST,
+        port: process.env.DB_PORT,
+        database: process.env.DB_NAME,
+      }
+);
+
 app.use(
   session({
-    store: new pgSession(
-      process.env.DATABASE_URL
-        ? {
-            conString: process.env.DATABASE_URL,
-            ssl: { rejectUnauthorized: false },
-            createTableIfMissing: true,
-          }
-        : {
-            conObject: {
-              user: process.env.DB_USER,
-              password: process.env.DB_PASSWORD,
-              host: process.env.DB_HOST,
-              port: process.env.DB_PORT,
-              database: process.env.DB_NAME,
-            },
-            createTableIfMissing: true,
-          }
-    ),
+    store: new pgSession({
+      pool: pgPool,
+      createTableIfMissing: true,
+    }),
     secret: process.env.SESSION_SECRET || 'change-me-in-production',
     resave: false,
     saveUninitialized: false,
