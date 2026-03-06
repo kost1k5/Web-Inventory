@@ -23,3 +23,7 @@ services:
         sync: false
       - key: GITHUB_CLIENT_SECRET
         sync: false
+      - key: GITHUB_CALLBACK_URL
+        value: https://web-inventory.onrender.com/api/auth/github/callback
+      - key: GOOGLE_CALLBACK_URL
+        value: https://web-inventory.onrender.com/api/auth/google/callback
