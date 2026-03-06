@@ -1,49 +1,54 @@
-const {DataTypes} = require('sequelize');
+const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
+// Пользователь всегда приходит через OAuth (Google или GitHub).
+// provider + providerId — уникальная пара: один человек может иметь
+// два отдельных аккаунта (через Google и через GitHub) — это осознанное решение.
+// theme и language сохраняются на сервере, чтобы настройки не терялись при смене браузера.
 const User = sequelize.define('User', {
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
   },
-email:{
+  email: {
     type: DataTypes.STRING,
     allowNull: false,
-},
-name:{
+  },
+  name: {
     type: DataTypes.STRING,
     allowNull: false,
-},
-provider:{
+  },
+  // 'google' или 'github'
+  provider: {
     type: DataTypes.STRING,
     allowNull: false,
-},
-providerId:{
+  },
+  // ID пользователя на стороне провайдера
+  providerId: {
     type: DataTypes.STRING,
     allowNull: false,
-},
-isAdmin:{
+  },
+  isAdmin: {
     type: DataTypes.BOOLEAN,
-    defaultValue: false},
-isBlocked:{
+    defaultValue: false,
+  },
+  isBlocked: {
     type: DataTypes.BOOLEAN,
-    defaultValue: false
-},
-theme:{
+    defaultValue: false,
+  },
+  theme: {
     type: DataTypes.STRING,
     defaultValue: 'light',
-},
-language:{
+  },
+  language: {
     type: DataTypes.STRING,
     defaultValue: 'en',
-}
-
+  },
 }, {
   indexes: [
-    // Один OAuth-аккаунт на провайдер: github+id123 и google+id123 — разные аккаунты
-    { unique: true, fields: ['provider', 'providerId'] }
-  ]
+    { unique: true, fields: ['provider', 'providerId'] },
+  ],
 });
 
 module.exports = User;

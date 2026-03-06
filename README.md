@@ -1,33 +1,143 @@
-# Web Inventory Management System
+# Web Inventory
 
-Система управления инвентарём с кастомными полями и real-time обсуждениями.
+Веб-приложение для управления инвентарём. Пользователи создают инвентари с произвольными полями и кастомными ID, добавляют элементы, обсуждают их в режиме реального времени.
 
-## 🚀 Технологии
+**Живая версия:** https://web-inventory-alpha.vercel.app
 
-**Frontend:** React 19, Ant Design, Socket.IO, i18next  
-**Backend:** Node.js, Express, PostgreSQL, Sequelize, Socket.IO
+---
 
-## 📁 Структура
+## Стек
+
+| Часть | Технологии |
+|---|---|
+| Frontend | React 19, Ant Design 5, React Router, Socket.IO client, react-i18next |
+| Backend | Node.js, Express 5, Passport.js (OAuth), Socket.IO |
+| База данных | PostgreSQL, Sequelize ORM |
+| Деплой | Vercel (frontend), Render (backend), Render PostgreSQL |
+
+---
+
+## Структура репозитория
 
 ```
-client/src/
-  ├── components/    # Переиспользуемые компоненты
-  ├── pages/         # Страницы (Home, Dashboard, InventoryDetail)
-  ├── services/      # API клиент
-  └── contexts/      # AuthContext, ThemeContext
-
-server/src/
-  ├── models/        # Sequelize модели (User, Inventory, Item)
-  ├── routes/        # API endpoints
-  └── config/        # database, passport
+/
+├── client/          # React-приложение (деплоится на Vercel)
+│   └── src/
+│       ├── components/   # переиспользуемые компоненты (Header, ItemForm, ...)
+│       ├── contexts/     # AuthContext, ThemeContext
+│       ├── pages/        # страницы: Home, Dashboard, InventoryDetail, ...
+│       └── services/     # api.js — единственная точка входа для HTTP-запросов
+│
+└── server/          # Express-приложение (деплоится на Render)
+    └── src/
+        ├── config/       # database.js (Sequelize), passport.js (OAuth стратегии)
+        ├── middleware/   # requireAuth, requireAdmin
+        ├── models/       # User, Inventory, Item, InventoryField, Tag, ...
+        ├── routes/       # auth.js, inventories.js, admin.js, uploads.js
+        └── utils/        # userService.js
 ```
 
-## 🔑 Ключевые фичи
+---
 
-- **Кастомные поля** - до 3 полей каждого типа (text, number, document, checkbox)
-- **Кастомные ID** - генерация уникальных ID по формату
-- **Real-time обсуждения** - WebSocket через Socket.IO
-- **Optimistic Locking** - версионирование для предотвращения конфликтов
+## Локальный запуск
+
+### Требования
+
+- Node.js 18+
+- PostgreSQL (локальная база или строка подключения)
+
+### Установка
+
+```bash
+# Backend
+cd server
+cp .env.example .env    # заполни переменные
+npm install
+npm run dev             # порт 5000
+
+# Frontend (в отдельном терминале)
+cd client
+npm install
+npm run dev             # порт 5173
+```
+
+### Переменные окружения (server/.env)
+
+```env
+DATABASE_URL=           # строка подключения PostgreSQL (или DB_* переменные ниже)
+DB_USER=
+DB_PASSWORD=
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=web_inventory
+
+SESSION_SECRET=         # любая случайная строка
+
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/callback
+
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+GITHUB_CALLBACK_URL=http://localhost:5000/api/auth/github/callback
+
+FRONTEND_URL=http://localhost:5173
+NODE_ENV=development
+```
+
+---
+
+## Деплой
+
+### Backend → Render
+
+1. Создай новый **Web Service** в Render, подключи репозиторий
+2. Root Directory: `server`
+3. Build Command: `npm install`
+4. Start Command: `node src/app.js`
+5. Добавь все переменные из `.env.example` в **Environment**
+6. Для `GOOGLE_CALLBACK_URL` и `GITHUB_CALLBACK_URL` используй `https://ваш-домен.onrender.com/api/auth/.../callback`
+
+### Frontend → Vercel
+
+1. Подключи репозиторий, Root Directory: `client`
+2. Добавь переменную `VITE_API_URL=https://ваш-домен.onrender.com/api`
+3. Добавь `VITE_IMGBB_API_KEY` для загрузки изображений
+
+### OAuth
+
+**Google:** [console.cloud.google.com](https://console.cloud.google.com) → Credentials → OAuth Client → Authorized redirect URIs → добавь callback URL сервера
+
+**GitHub:** [github.com/settings/developers](https://github.com/settings/developers) → OAuth Apps → твоё приложение → Authorization callback URL
+
+---
+
+## Основные возможности
+
+- **Кастомные поля** — до 3 полей каждого типа на инвентарь: строка, текст, число, документ/ссылка, чекбокс
+- **Кастомные ID** — настраиваемый формат (текст, случайное число, дата, UUID, последовательность), drag-and-drop порядок элементов
+- **Права доступа** — публичный инвентарь или список конкретных пользователей
+- **Автосохранение** — настройки инвентаря сохраняются каждые 7 секунд с optimistic locking
+- **Обсуждения** — real-time через Socket.IO, Markdown
+- **Поиск** — full-text по названию и описанию инвентарей и элементов
+- **Темы и локализация** — светлая/тёмная тема, English/Russian, сохраняется в профиле
+- **Статистика** — количество элементов, min/max/avg для числовых полей, топ-значения для строковых
+- **Лайки** — один лайк на элемент с каждого пользователя
+- **Админ-панель** — блокировка, разблокировка, удаление пользователей, управление ролями
+
+---
+
+## Архитектурные решения
+
+**Почему фиксированные поля, а не dynamic columns?**
+Инвентарь использует фиксированную схему: по 3 поля каждого типа в таблице `Items`. Тип и заголовок полей хранятся в `InventoryFields`. Это позволяет делать агрегацию (`AVG`, `MIN`, `MAX`) простыми SQL-запросами без динамического SQL и позволяет редактировать поля инвентаря без миграций схемы.
+
+**Optimistic locking**
+Каждый инвентарь и каждый элемент хранит целочисленный `version`. При сохранении клиент передаёт текущую версию, сервер проверяет совпадение и возвращает `409 Conflict` при коллизии. Это защищает от потери данных при одновременном редактировании.
+
+**Сессии в PostgreSQL**
+Сессии хранятся в таблице `session` через `connect-pg-simple`. Это позволяет серверу перезапускаться (Render free tier засыпает) без разлогинивания пользователей.
+
 - **Управление доступом** - public/private инвентари
 
 ## 🛠️ Установка

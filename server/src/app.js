@@ -24,44 +24,36 @@ const Category = require('./models/Category');
 const Tag = require('./models/Tag');
 const InventoryAccess = require('./models/InventoryAccess');
 
-// ASSOCIATIONS (связи между моделями)
-// User ↔ Inventory (один user может иметь много inventories)
+// --- Sequelize associations ---
 User.hasMany(Inventory, { foreignKey: 'ownerId' });
 Inventory.belongsTo(User, { foreignKey: 'ownerId' });
 
-// Inventory ↔ InventoryField (один inventory имеет много fields)
 Inventory.hasMany(InventoryField, { foreignKey: 'inventoryId' });
 InventoryField.belongsTo(Inventory, { foreignKey: 'inventoryId' });
 
-// Inventory ↔ Tag (many-to-many через связующую таблицу InventoryTags)
+// Теги — many-to-many через промежуточную таблицу InventoryTags
 Inventory.belongsToMany(Tag, { through: 'InventoryTags', foreignKey: 'inventoryId' });
 Tag.belongsToMany(Inventory, { through: 'InventoryTags', foreignKey: 'tagId' });
 
-// Inventory ↔ User (many-to-many через связующую таблицу InventoryAccess)
-Inventory.belongsToMany(User,{through: InventoryAccess, foreignKey:'inventoryId', otherKey:'userId'});
-User.belongsToMany(Inventory,{through: InventoryAccess, foreignKey:'userId', otherKey:'inventoryId'});
+// Список пользователей с доступом на запись — many-to-many через InventoryAccess
+Inventory.belongsToMany(User, { through: InventoryAccess, foreignKey: 'inventoryId', otherKey: 'userId' });
+User.belongsToMany(Inventory, { through: InventoryAccess, foreignKey: 'userId', otherKey: 'inventoryId' });
 
-// Inventory ↔ Item (один inventory имеет много items)
 Inventory.hasMany(Item, { foreignKey: 'inventoryId' });
 Item.belongsTo(Inventory, { foreignKey: 'inventoryId' });
 
-// User ↔ Item (один user создал много items)
 User.hasMany(Item, { foreignKey: 'createdBy' });
 Item.belongsTo(User, { foreignKey: 'createdBy' });
 
-// Inventory ↔ Discussion
 Inventory.hasMany(Discussion, { foreignKey: 'inventoryId' });
 Discussion.belongsTo(Inventory, { foreignKey: 'inventoryId' });
 
-// User ↔ Discussion
 User.hasMany(Discussion, { foreignKey: 'userId' });
 Discussion.belongsTo(User, { foreignKey: 'userId' });
 
-// Item ↔ ItemLike
 Item.hasMany(ItemLike, { foreignKey: 'itemId' });
 ItemLike.belongsTo(Item, { foreignKey: 'itemId' });
 
-// User ↔ ItemLike
 User.hasMany(ItemLike, { foreignKey: 'userId' });
 ItemLike.belongsTo(User, { foreignKey: 'userId' });
 
@@ -86,8 +78,7 @@ const io = new Server(server, {
 });
 const PORT = process.env.PORT || 5000;
 
-// Middleware — ПОРЯДОК ВАЖЕН!
-// 1. Парсеры и CORS
+// --- Middleware ---
 app.use(cors({
   origin: function (origin, callback) {
     const allowed = [
@@ -103,10 +94,11 @@ app.use(cors({
   },
   credentials: true,
 }));
-app.use(express.json());      // Парсим JSON из тела запросов
+app.use(express.json());
 app.use('/api/upload', uploadsRouter);
-// 2. Управление сессиями
-// pg.Pool с явным SSL для Neon/Render (conString не поддерживает ssl-опции напрямую)
+
+// Pg.Pool передаётся явно, чтобы можно было задать ssl: rejectUnauthorized: false
+// (при передаче connectionString напрямую в pgSession SSL-опции игнорируются)
 const pgPool = new Pool(
   process.env.DATABASE_URL
     ? {
@@ -133,29 +125,25 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // HTTPS в production
-      maxAge: 24 * 60 * 60 * 1000, // 24 часа
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000,
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    }
+    },
   })
 );
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-// 3. Инициализация Passport
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Тестовый роут — проверяем что сервер работает
+// --- Routes ---
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Server is running' });
+  res.json({ status: 'ok' });
 });
-
-// Подключаем роуты аутентификации
 app.use('/api/auth', authRouter);
 app.use('/api/admin', adminRouter);
-
-// Подключаем роуты инвентарей
 app.use('/api/inventories', inventoriesRouter);
 
+// --- Socket.IO ---
 io.on('connection', (socket) => {
   socket.on('joinInventory', (inventoryId) => {
     if (!inventoryId) return;
@@ -188,40 +176,26 @@ io.on('connection', (socket) => {
   });
 });
 
-// Подключаемся к БД и запускаем сервер
+// --- Startup ---
 async function start() {
   try {
     await sequelize.authenticate();
-    console.log('✅ Database connected successfully');
+    console.log('Database connected');
 
-    // sync() без alter — таблицы уже существуют, структура управляется миграциями
     await sequelize.sync();
-    console.log('✅ Models synchronized');
 
-    // Инициализируем предопределённые категории
-    const defaultCategories = [
-      { name: 'Equipment' },
-      { name: 'Furniture' },
-      { name: 'Book' },
-      { name: 'Other' }
-    ];
-    
-    for (const cat of defaultCategories) {
-      await Category.findOrCreate({
-        where: { name: cat.name },
-        defaults: { name: cat.name }
-      });
+    // Категории добавляются только при первом запуске;
+    // новые значения добавляются напрямую в БД без UI
+    const defaultCategories = ['Equipment', 'Furniture', 'Book', 'Other'];
+    for (const name of defaultCategories) {
+      await Category.findOrCreate({ where: { name }, defaults: { name } });
     }
-    console.log('✅ Default categories initialized');
 
     server.listen(PORT, () => {
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
-      console.log(`📧 OAuth configured:`);
-      console.log(`   - Google callback: http://localhost:${PORT}/api/auth/google/callback`);
-      console.log(`   - Facebook callback: http://localhost:${PORT}/api/auth/facebook/callback`);
+      console.log(`Server running on port ${PORT}`);
     });
   } catch (error) {
-    console.error('❌ Unable to start server:', error.message);
+    console.error('Startup error:', error.message);
     process.exit(1);
   }
 }
