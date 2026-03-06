@@ -20,8 +20,7 @@ router.get('/google/callback',
     // Явно сохраняем сессию в PostgreSQL перед редиректом
     // (без этого redirect может уйти до того как async-запись в БД завершится)
     req.session.save((err) => {
-      if (err) console.error('Session save error (google):', err);
-      console.log('[google/callback] session saved, sid:', req.sessionID, 'user:', req.user?.email);
+      if (err) console.error('Session save error:', err);
       res.redirect(`${FRONTEND_URL}/dashboard`);
     });
   }
@@ -57,8 +56,7 @@ router.get('/github/callback',
     }
     // Явно сохраняем сессию в PostgreSQL перед редиректом
     req.session.save((err) => {
-      if (err) console.error('Session save error (github):', err);
-      console.log('[github/callback] session saved, sid:', req.sessionID, 'user:', req.user?.email);
+      if (err) console.error('Session save error:', err);
       res.redirect(`${FRONTEND_URL}/dashboard`);
     });
   }
@@ -74,7 +72,6 @@ router.post('/logout', (req, res) => {
 });
 
 router.get('/me', (req, res) => {
-  console.log('[/me] isAuthenticated:', req.isAuthenticated(), 'sessionID:', req.sessionID, 'user:', req.user?.email);
   if (req.isAuthenticated() && !req.user?.isBlocked) {
     return res.json(req.user);
   }

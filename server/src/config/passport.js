@@ -15,14 +15,11 @@ passport.serializeUser((user, done) => {
 // DESERIALIZEUSER - достаём из БД по ID
 passport.deserializeUser(async (id, done) => {
   try {
-    console.log('[deserializeUser] called with id:', id);
     const user = await User.findByPk(id);
-    console.log('[deserializeUser] user found:', user ? user.email : 'NOT FOUND');
     // Если пользователь заблокирован — сессия сразу инвалидируется
     if (!user || user.isBlocked) return done(null, false);
     done(null, user);
   } catch (error) {
-    console.error('[deserializeUser] error:', error);
     done(error, null);
   }
 });
