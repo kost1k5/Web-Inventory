@@ -15,10 +15,10 @@ const { Content } = Layout;
 
 function App() {
   const { isDarkMode } = useTheme();
-  // const { t } = useTranslation();
 
   return (
     <BrowserRouter>
+      {/* Ant Design theme переключается на уровне корневого ConfigProvider. */}
       <ConfigProvider theme={{ algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm }}>
         <AntApp>
           <Layout style={{ minHeight: '100vh' }}>

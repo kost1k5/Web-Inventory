@@ -16,7 +16,7 @@ export function Login() {
 
   const errorParam = searchParams.get('error');
 
-  // Если пользователь уже авторизирован, редиректим на Dashboard
+  // После успешного OAuth пользователь возвращается на эту страницу уже с активной сессией.
   useEffect(() => {
     if (user && !loading) {
       navigate('/dashboard');
@@ -56,6 +56,7 @@ export function Login() {
           />
         )}
 
+        {/* OAuth провайдеры открывают серверный endpoint, а не внешний URL напрямую. */}
         <Flex vertical gap="small">
           <Button
             type="primary"

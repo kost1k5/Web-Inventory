@@ -20,6 +20,8 @@ export function InventoryCreate() {
   const { token } = theme.useToken();
   const { user, loading: authLoading } = useAuth();
 
+  // Создание инвентаря остаётся отдельным сценарием от редактирования,
+  // поэтому здесь собраны category, tags и cloud-upload изображения.
   useEffect(() => {
     if (!authLoading && !user) navigate('/login');
   }, [user, authLoading, navigate]);
@@ -33,6 +35,7 @@ export function InventoryCreate() {
       .catch(() => {});
   }, []);
 
+  // Подсказки по тегам приходят с сервера, чтобы не дублировать справочник на клиенте.
   const handleTagSearch = async (q) => {
     try {
       const names = await api.tags.suggest(q);
@@ -40,6 +43,8 @@ export function InventoryCreate() {
     } catch { /* ignore */ }
   };
 
+  // Изображение отправляется сразу в облачное хранилище,
+  // а в инвентарь сохраняется только внешний URL.
   const handleImageUpload = async (file) => {
     setUploading(true);
     try {
@@ -61,6 +66,7 @@ export function InventoryCreate() {
     return false;
   };
 
+  // Сервер создаёт сам inventory и связывает его с owner по текущей сессии.
   const handleSubmit = async (values) => {
     setLoading(true);
     try {

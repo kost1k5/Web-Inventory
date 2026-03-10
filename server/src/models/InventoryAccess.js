@@ -21,7 +21,7 @@ userId:{
      indexes: [
     {
       unique: true,
-      fields: ['inventoryId', 'userId'], // ← Composite unique!
+      fields: ['inventoryId', 'userId'],
     }
   ]
 })

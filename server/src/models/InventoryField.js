@@ -15,21 +15,18 @@ const InventoryField = sequelize.define('InventoryField', {
       key: 'id',
     },
   },
-  // fieldType говорит ТИП поля: текст, число и т.д.
   fieldType: {
     type: DataTypes.ENUM('text', 'multiline', 'number', 'document', 'checkbox'),
     allowNull: false,
   },
-  // fieldIndex говорит: это 1-ое (0), 2-ое (1) или 3-ое (2) текстовое поле?
   fieldIndex: {
     type: DataTypes.INTEGER,
     allowNull: false,
     validate: {
       min: 0,
-      max: 2, // ← Максимум 3 поля каждого типа (индексы 0, 1, 2)
+      max: 2,
     },
   },
-  // order - в каком порядке показать на форме пользователю
   order: {
     type: DataTypes.INTEGER,
     allowNull: false,
@@ -51,7 +48,7 @@ const InventoryField = sequelize.define('InventoryField', {
     {
       unique: true,
       fields: ['inventoryId', 'fieldType', 'fieldIndex'],
-      name: 'inventory_field_unique', // ← ВАЖНО! Гарантирует уникальность
+      name: 'inventory_field_unique',
     },
     {
       fields: ['inventoryId', 'order'],

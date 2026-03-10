@@ -1,8 +1,6 @@
-// Центральный HTTP-клиент. Все запросы к серверу идут через этот файл.
-// credentials: 'include' обязателен — без него браузер не отправит session cookie
-// на cross-origin запросы (Vercel → Render).
 const BASE_URL = import.meta.env.VITE_API_URL || 'https://web-inventory.onrender.com/api';
 
+// Единый HTTP-клиент упрощает обработку session-cookie и единый формат ошибок.
 async function request(path, options = {}) {
   const response = await fetch(`${BASE_URL}${path}`, {
     credentials: 'include',

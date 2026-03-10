@@ -14,20 +14,20 @@ export function Dashboard() {
   const [accessInventories, setAccessInventories] = useState([]);
   const [dataLoading, setDataLoading] = useState(true);
 
-  // Если пользователь не авторизирован, редиректим на Login
+  // Страница кабинета доступна только после авторизации.
   useEffect(() => {
     if (!user && !loading) {
       navigate('/login');
     }
   }, [user, loading, navigate]);
 
-  // Загружаем инвентари
+  // Текущая реализация строит обе таблицы из общего списка инвентарей.
+  // Для строгого соответствия ТЗ список с доступом должен приходить отдельным серверным запросом.
   useEffect(() => {
     const fetchInventories = async () => {
       try {
         const data = await api.inventories.getAll();
         
-        // Фильтруем: Мои и С доступом
         const mine = data.filter(inv => inv.owner?.id === user?.id);
         const withAccess = data.filter(inv => inv.owner?.id !== user?.id);
         

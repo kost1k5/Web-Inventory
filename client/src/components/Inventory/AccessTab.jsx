@@ -11,6 +11,8 @@ export function AccessTab({ inventoryId, canManage }) {
   const [sortMode, setSortMode] = useState('name');
   const [selectedUser, setSelectedUser] = useState(null);
 
+  // Access list доступен только owner/admin.
+  // Пользователь с write access не меняет состав списка.
   useEffect(() => {
     let active = true;
 
@@ -31,6 +33,8 @@ export function AccessTab({ inventoryId, canManage }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inventoryId, canManage]);
 
+  // Autocomplete ищет и по имени, и по email,
+  // чтобы соответствовать сценарию выдачи доступа из ТЗ.
   const handleSuggest = async (value) => {
     setSearch(value);
     if (!value || !canManage) {
@@ -60,6 +64,8 @@ export function AccessTab({ inventoryId, canManage }) {
     setUsers((prev) => prev.filter((user) => user.id !== id));
   };
 
+  // Сохранение отправляет на сервер полный список userId,
+  // чтобы клиент не зависел от частичных add/remove операций.
   const save = async () => {
     try {
       await api.access.update(inventoryId, users.map((user) => user.id));

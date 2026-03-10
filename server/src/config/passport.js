@@ -6,17 +6,14 @@ const { findOrCreateUser } = require('../utils/userService');
 
 require('dotenv').config();
 
-// SERIALIZEUSER - сохраняем в сессию
+// В сессии хранится только user.id; полный профиль восстанавливается через deserializeUser.
 passport.serializeUser((user, done) => {
-  // user - полный объект User из БД
-  done(null, user.id); // Что тут писать?
+  done(null, user.id);
 });
 
-// DESERIALIZEUSER - достаём из БД по ID
 passport.deserializeUser(async (id, done) => {
   try {
     const user = await User.findByPk(id);
-    // Если пользователь заблокирован — сессия сразу инвалидируется
     if (!user || user.isBlocked) return done(null, false);
     done(null, user);
   } catch (error) {
@@ -24,7 +21,6 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
-// GOOGLE STRATEGY
 passport.use(
   new GoogleStrategy(
     {
@@ -47,15 +43,17 @@ passport.use(
   )
 );
 
-// FACEBOOK STRATEGY (временно отключена - не получается создать аккаунт)
+// Facebook strategy is kept here but not enabled.
 /*
+// GitHub нужен как второй OAuth provider и использует fallback email,
+// потому что часть аккаунтов скрывает основной адрес.
 passport.use(
   new FacebookStrategy(
     {
       clientID: process.env.FACEBOOK_APP_ID,
       clientSecret: process.env.FACEBOOK_APP_SECRET,
       callbackURL: process.env.FACEBOOK_CALLBACK_URL,
-        profileFields: ['id', 'displayName', 'emails'], // Запрашиваем email у Facebook
+        profileFields: ['id', 'displayName', 'emails'],
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -84,8 +82,6 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        // GitHub может не отдавать email если он скрыт в настройках профиля.
-        // Используем noreply-адрес как запасной вариант.
         const email =
           (profile.emails && profile.emails[0]?.value) ||
           `${profile.username}@users.noreply.github.com`;

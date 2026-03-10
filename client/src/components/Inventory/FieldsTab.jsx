@@ -36,7 +36,6 @@ function SortableField({ field, disabled, onToggle, onRemove }) {
   return (
     <div ref={setNodeRef} style={containerStyle}>
       <Flex justify="space-between" align="center" wrap="wrap" gap="small">
-        {/* Левая часть: drag handle + инфо */}
         <Flex align="center" gap="small">
           <HolderOutlined
             {...attributes}
@@ -52,7 +51,6 @@ function SortableField({ field, disabled, onToggle, onRemove }) {
           )}
         </Flex>
 
-        {/* Правая часть: тоггл + удалить */}
         <Flex align="center" gap="small">
           <Tooltip title={field.showInTable ? t('fields.showTooltip') : t('fields.hideTooltip')}>
             <Switch
@@ -88,6 +86,8 @@ export function FieldsTab({ inventoryId, canManage, onFieldsChange }) {
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
+  // Вкладка читает текущее описание полей из InventoryField,
+  // а не пытается восстановить его из существующих item'ов.
   useEffect(() => {
     let active = true;
 
@@ -151,6 +151,8 @@ export function FieldsTab({ inventoryId, canManage, onFieldsChange }) {
     }
   };
 
+  // reorder меняет только presentation order и не затрагивает fieldIndex.
+  // Это важно: fieldIndex привязан к физической колонке Item.
   const onDragEnd = async (event) => {
     if (!canManage) return;
 

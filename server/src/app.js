@@ -16,7 +16,6 @@ const ItemLike = require('./models/ItemLike');
 
 const inventoriesRouter = require('./routes/inventories');
 
-// Импортируем модели — sync() создаст таблицы только для импортированных моделей
 const User = require('./models/User');
 const Inventory = require('./models/Inventory');
 const InventoryField = require('./models/InventoryField');
@@ -24,18 +23,15 @@ const Category = require('./models/Category');
 const Tag = require('./models/Tag');
 const InventoryAccess = require('./models/InventoryAccess');
 
-// --- Sequelize associations ---
 User.hasMany(Inventory, { foreignKey: 'ownerId' });
 Inventory.belongsTo(User, { foreignKey: 'ownerId' });
 
 Inventory.hasMany(InventoryField, { foreignKey: 'inventoryId' });
 InventoryField.belongsTo(Inventory, { foreignKey: 'inventoryId' });
 
-// Теги — many-to-many через промежуточную таблицу InventoryTags
 Inventory.belongsToMany(Tag, { through: 'InventoryTags', foreignKey: 'inventoryId' });
 Tag.belongsToMany(Inventory, { through: 'InventoryTags', foreignKey: 'tagId' });
 
-// Список пользователей с доступом на запись — many-to-many через InventoryAccess
 Inventory.belongsToMany(User, { through: InventoryAccess, foreignKey: 'inventoryId', otherKey: 'userId' });
 User.belongsToMany(Inventory, { through: InventoryAccess, foreignKey: 'userId', otherKey: 'inventoryId' });
 
@@ -57,16 +53,19 @@ ItemLike.belongsTo(Item, { foreignKey: 'itemId' });
 User.hasMany(ItemLike, { foreignKey: 'userId' });
 ItemLike.belongsTo(User, { foreignKey: 'userId' });
 
-// Импортируем роуты
 const authRouter = require('./routes/auth');
 const adminRouter = require('./routes/admin');
 
 const app = express();
 
-// Render/Heroku/etc работают за reverse proxy — без этого secure cookies не ставятся
+// За reverse proxy приложение должно доверять заголовкам прокси,
+// иначе secure-cookie в production не будут выставляться корректно.
 app.set('trust proxy', 1);
 
 const server = http.createServer(app);
+
+// Socket.IO используется только для вкладки discussion.
+// Остальные сценарии работают через обычный HTTP API.
 const io = new Server(server, {
   cors: {
     origin: [
@@ -78,7 +77,7 @@ const io = new Server(server, {
 });
 const PORT = process.env.PORT || 5000;
 
-// --- Middleware ---
+// CORS разрешает production frontend и локальные Vite-порты.
 app.use(cors({
   origin: function (origin, callback) {
     const allowed = [
@@ -97,8 +96,7 @@ app.use(cors({
 app.use(express.json());
 app.use('/api/upload', uploadsRouter);
 
-// Pg.Pool передаётся явно, чтобы можно было задать ssl: rejectUnauthorized: false
-// (при передаче connectionString напрямую в pgSession SSL-опции игнорируются)
+// Отдельный pg Pool используется и для connect-pg-simple, и для настройки SSL в hosted PostgreSQL.
 const pgPool = new Pool(
   process.env.DATABASE_URL
     ? {
@@ -135,7 +133,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(passport.initialize());
 app.use(passport.session());
 
-// --- Routes ---
+// Health-check нужен для Render и ручной диагностики сервиса.
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
@@ -143,8 +141,8 @@ app.use('/api/auth', authRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/inventories', inventoriesRouter);
 
-// --- Socket.IO ---
 io.on('connection', (socket) => {
+  // Каждому inventory соответствует отдельная room, чтобы не рассылать обсуждения глобально.
   socket.on('joinInventory', (inventoryId) => {
     if (!inventoryId) return;
     socket.join(`inventory:${inventoryId}`);
@@ -176,16 +174,15 @@ io.on('connection', (socket) => {
   });
 });
 
-// --- Startup ---
 async function start() {
   try {
     await sequelize.authenticate();
     console.log('Database connected');
 
+    // Проект опирается на sync() и фиксированную схему полей Item,
+    // поэтому отдельные runtime-миграции здесь не используются.
     await sequelize.sync();
 
-    // Категории добавляются только при первом запуске;
-    // новые значения добавляются напрямую в БД без UI
     const defaultCategories = ['Equipment', 'Furniture', 'Book', 'Other'];
     for (const name of defaultCategories) {
       await Category.findOrCreate({ where: { name }, defaults: { name } });

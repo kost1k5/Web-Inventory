@@ -8,8 +8,7 @@ export function ItemForm({ fields = [], onSubmit, initialValues }) {
     onSubmit(values);
   };
 
-  // Маппинг fieldType в название столбца БД
-  // Например: type='text', index=0 → 'textField1'
+  // fieldType/fieldIndex определяют, в какую фиксированную колонку Item попадёт значение.
   const getFieldName = (fieldType, fieldIndex) => {
   const typeMap = {
     'text': 'textField',
@@ -24,7 +23,7 @@ export function ItemForm({ fields = [], onSubmit, initialValues }) {
   return (
     <Form form={form} layout="vertical" onFinish={handleSubmit} initialValues={initialValues}>
 
-      {/* customId — всегда присутствует, редактируемый */}
+      {/* customId относится к фиксированным системным полям item. */}
       <Form.Item
         label="Custom ID"
         name="customId"
@@ -33,7 +32,6 @@ export function ItemForm({ fields = [], onSubmit, initialValues }) {
         <Input placeholder="Будет сгенерирован автоматически" />
       </Form.Item>
 
-      {/* Кастомные поля, заданные во вкладке Fields */}
       {fields.length === 0 && (
         <Typography.Text type="secondary">
           Нет кастомных полей. Добавьте поля во вкладке «Fields».

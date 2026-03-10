@@ -46,8 +46,11 @@ export function InventoryDetail() {
   const [isAutosaving, setIsAutosaving] = useState(false);
   const autosaveTimerRef = useRef(null);
 
+  // Управление инвентарём шире, чем обычный write access:
+  // owner/admin редактируют настройки, поля, доступы и custom ID.
   const canManageInventory = Boolean(userAccess?.isOwner || userAccess?.isAdmin || user?.isAdmin);
 
+  // Поля используются и в таблице items, и в форме редактирования элемента.
   const loadFields = useCallback(async () => {
     try {
       const data = await api.fields.getByInventoryId(id);
@@ -61,6 +64,7 @@ export function InventoryDetail() {
   const loadPage = useCallback(async () => {
     setLoading(true);
     try {
+      // Страница собирается из двух источников: metadata инвентаря и списка item'ов.
       const inventoryData = await api.inventories.getById(id);
       setInventory(inventoryData.inventory);
       setUserAccess(inventoryData.userAccess);
@@ -100,6 +104,7 @@ export function InventoryDetail() {
     }
   };
 
+  // Лайк обновляется локально без полного reload таблицы.
   const handleToggleLike = useCallback(async (itemId) => {
     if (!user) return;
     try {
@@ -115,6 +120,7 @@ export function InventoryDetail() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, user]);
 
+  // Форма item работает в двух режимах: create и edit.
   const handleSaveItem = async (values) => {
     try {
       if (editingItem) {
@@ -135,6 +141,7 @@ export function InventoryDetail() {
     }
   };
 
+  // Настройки инвентаря сохраняются через optimistic locking.
   const handleSaveSettings = useCallback(async (values, silent = false) => {
     if (!inventory) return;
 
@@ -157,6 +164,8 @@ export function InventoryDetail() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   [id, inventory, loadPage]);
 
+  // Автосохранение запускается только для управляемых настроек инвентаря.
+  // Для item'ов по ТЗ достаточно явного сохранения.
   useEffect(() => {
     if (!canManageInventory) return;
     if (!isDirty || !settingsDraft) return;
@@ -171,6 +180,7 @@ export function InventoryDetail() {
     return () => clearInterval(autosaveTimerRef.current);
   }, [isDirty, settingsDraft, canManageInventory, isAutosaving, handleSaveSettings]);
 
+  // Колонки таблицы строятся динамически из конфигурации InventoryField.
   const columns = useMemo(() => {
     const typeMap = {
       text: 'textField',
@@ -255,6 +265,7 @@ export function InventoryDetail() {
   if (loading) return <Flex justify="center" align="center" style={{ minHeight: 300 }}><Spin indicator={<LoadingOutlined spin />} size="large" /></Flex>;
   if (!inventory) return <Typography.Text type="secondary">{t('items.empty')}</Typography.Text>;
 
+  // Набор вкладок зависит от роли пользователя, но структура страницы остаётся единой.
   const tabs = [
     {
       key: 'items',

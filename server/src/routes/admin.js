@@ -4,6 +4,7 @@ const { requireAdmin } = require('../middleware/auth');
 
 const router = Router();
 
+// Админские операции идут отдельным роутером, чтобы role-based доступ был изолирован от общего API.
 router.get('/users', requireAdmin, async (_req, res) => {
   try {
     const users = await User.findAll({
@@ -23,6 +24,7 @@ router.put('/users/:id', requireAdmin, async (req, res) => {
     const user = await User.findByPk(req.params.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
+    // Обновляем только флаги, которые разрешены админке.
     const updates = {};
     if (typeof req.body.isBlocked === 'boolean') updates.isBlocked = req.body.isBlocked;
     if (typeof req.body.isAdmin === 'boolean') updates.isAdmin = req.body.isAdmin;

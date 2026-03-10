@@ -20,6 +20,8 @@ export function Home() {
   useEffect(() => {
     const fetchInventories = async () => {
       try {
+        // При поиске переиспользуется тот же layout, что и для главной страницы,
+        // меняется только источник данных.
         const [data, tags] = await Promise.all([
           query ? api.inventories.search(query) : api.inventories.getAll(),
           api.inventories.getTagCloud(),
@@ -40,7 +42,7 @@ export function Home() {
     .sort((a, b) => (b.itemsCount || 0) - (a.itemsCount || 0))
     .slice(0, 5);
 
-  // Нормализуем размер шрифта тегов от min до max usageCount
+  // Облако тегов масштабируется относительно максимальной частоты использования.
   const maxCount = Math.max(...tagCloud.map((t2) => Number(t2.usageCount || 1)), 1);
   const tagFontSize = (count) => 12 + Math.round((Number(count) / maxCount) * 14);
 

@@ -1,77 +1,100 @@
 # Web Inventory
 
-Веб-приложение для управления инвентарём. Пользователи создают инвентари с произвольными полями и кастомными ID, добавляют элементы, обсуждают их в режиме реального времени.
+Живая версия: https://web-inventory-alpha.vercel.app
 
-**Живая версия:** https://web-inventory-alpha.vercel.app
+## Что умеет приложение
 
----
+- Авторизация через Google и GitHub OAuth
+- Создание инвентарей с названием, описанием, категорией, тегами и изображением
+- Публичные и приватные инвентари с настройкой прав на запись
+- Кастомные поля элементов: текст, многострочный текст, число, ссылка на документ, чекбокс
+- Кастомные ID элементов с настраиваемым форматом
+- Табличный просмотр инвентарей и элементов без кнопок действий в строках
+- Обсуждение инвентаря в near real-time через Socket.IO
+- Лайки для элементов
+- Full-text поиск по инвентарям
+- Светлая и тёмная темы, локализация интерфейса
+- Админ-панель для управления пользователями
 
-## Стек
+## Технологии
 
-| Часть | Технологии |
+| Слой | Технологии |
 |---|---|
-| Frontend | React 19, Ant Design 5, React Router, Socket.IO client, react-i18next |
-| Backend | Node.js, Express 5, Passport.js (OAuth), Socket.IO |
-| База данных | PostgreSQL, Sequelize ORM |
-| Деплой | Vercel (frontend), Render (backend), Render PostgreSQL |
+| Frontend | React 19, Vite, Ant Design, React Router, react-i18next, Socket.IO Client |
+| Backend | Node.js, Express 5, Passport.js, Socket.IO |
+| Данные | PostgreSQL, Sequelize |
+| Сессии | express-session, connect-pg-simple |
+| Деплой | Vercel, Render |
 
----
+## Структура проекта
 
-## Структура репозитория
-
+```text
+.
+├── client/
+│   ├── src/
+│   │   ├── components/   # вкладки инвентаря, toolbar, формы
+│   │   ├── contexts/     # авторизация и тема
+│   │   ├── pages/        # основные страницы приложения
+│   │   ├── hooks/        # useAuth, useTheme
+│   │   ├── services/     # HTTP-клиент
+│   │   └── i18n.js       # переводы интерфейса
+│   └── package.json
+├── server/
+│   ├── src/
+│   │   ├── config/       # Sequelize и Passport
+│   │   ├── middleware/   # проверка авторизации и роли админа
+│   │   ├── models/       # модели Sequelize
+│   │   ├── routes/       # auth, inventories, admin, uploads
+│   │   └── utils/        # служебная логика
+│   └── .env.example
+├── render.yaml
+└── README.md
 ```
-/
-├── client/          # React-приложение (деплоится на Vercel)
-│   └── src/
-│       ├── components/   # переиспользуемые компоненты (Header, ItemForm, ...)
-│       ├── contexts/     # AuthContext, ThemeContext
-│       ├── pages/        # страницы: Home, Dashboard, InventoryDetail, ...
-│       └── services/     # api.js — единственная точка входа для HTTP-запросов
-│
-└── server/          # Express-приложение (деплоится на Render)
-    └── src/
-        ├── config/       # database.js (Sequelize), passport.js (OAuth стратегии)
-        ├── middleware/   # requireAuth, requireAdmin
-        ├── models/       # User, Inventory, Item, InventoryField, Tag, ...
-        ├── routes/       # auth.js, inventories.js, admin.js, uploads.js
-        └── utils/        # userService.js
-```
-
----
 
 ## Локальный запуск
 
 ### Требования
 
 - Node.js 18+
-- PostgreSQL (локальная база или строка подключения)
+- PostgreSQL
 
-### Установка
+### 1. Настройка backend
 
 ```bash
-# Backend
 cd server
-cp .env.example .env    # заполни переменные
+copy .env.example .env
 npm install
-npm run dev             # порт 5000
-
-# Frontend (в отдельном терминале)
-cd client
-npm install
-npm run dev             # порт 5173
+npm run dev
 ```
 
-### Переменные окружения (server/.env)
+Сервер по умолчанию запускается на порту 5000.
+
+### 2. Настройка frontend
+
+```bash
+cd client
+npm install
+npm run dev
+```
+
+Клиент по умолчанию запускается на порту 5173.
+
+### Переменные окружения backend
+
+Файл [server/.env.example](server/.env.example) содержит базовый шаблон.
+
+Ключевые переменные:
 
 ```env
-DATABASE_URL=           # строка подключения PostgreSQL (или DB_* переменные ниже)
-DB_USER=
-DB_PASSWORD=
+DB_NAME=inventory_db
+DB_USER=postgres
+DB_PASSWORD=your_password
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=web_inventory
 
-SESSION_SECRET=         # любая случайная строка
+SESSION_SECRET=change-this-to-a-long-random-string
+PORT=5000
+FRONTEND_URL=http://localhost:5173
 
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
@@ -81,163 +104,80 @@ GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
 GITHUB_CALLBACK_URL=http://localhost:5000/api/auth/github/callback
 
-FRONTEND_URL=http://localhost:5173
 NODE_ENV=development
 ```
 
----
+### Переменные окружения frontend
+
+Для клиента используются переменные Vite:
+
+```env
+VITE_API_URL=http://localhost:5000/api
+VITE_IMGBB_API_KEY=
+```
 
 ## Деплой
 
-### Backend → Render
+### Backend на Render
 
-1. Создай новый **Web Service** в Render, подключи репозиторий
-2. Root Directory: `server`
-3. Build Command: `npm install`
-4. Start Command: `node src/app.js`
-5. Добавь все переменные из `.env.example` в **Environment**
-6. Для `GOOGLE_CALLBACK_URL` и `GITHUB_CALLBACK_URL` используй `https://ваш-домен.onrender.com/api/auth/.../callback`
+1. Создать Web Service с корнем проекта server.
+2. Указать Build Command: npm install.
+3. Указать Start Command: node src/app.js.
+4. Добавить переменные из [server/.env.example](server/.env.example).
+5. Для OAuth callback использовать домен Render.
 
-### Frontend → Vercel
+### Frontend на Vercel
 
-1. Подключи репозиторий, Root Directory: `client`
-2. Добавь переменную `VITE_API_URL=https://ваш-домен.onrender.com/api`
-3. Добавь `VITE_IMGBB_API_KEY` для загрузки изображений
-
-### OAuth
-
-**Google:** [console.cloud.google.com](https://console.cloud.google.com) → Credentials → OAuth Client → Authorized redirect URIs → добавь callback URL сервера
-
-**GitHub:** [github.com/settings/developers](https://github.com/settings/developers) → OAuth Apps → твоё приложение → Authorization callback URL
-
----
-
-## Основные возможности
-
-- **Кастомные поля** — до 3 полей каждого типа на инвентарь: строка, текст, число, документ/ссылка, чекбокс
-- **Кастомные ID** — настраиваемый формат (текст, случайное число, дата, UUID, последовательность), drag-and-drop порядок элементов
-- **Права доступа** — публичный инвентарь или список конкретных пользователей
-- **Автосохранение** — настройки инвентаря сохраняются каждые 7 секунд с optimistic locking
-- **Обсуждения** — real-time через Socket.IO, Markdown
-- **Поиск** — full-text по названию и описанию инвентарей и элементов
-- **Темы и локализация** — светлая/тёмная тема, English/Russian, сохраняется в профиле
-- **Статистика** — количество элементов, min/max/avg для числовых полей, топ-значения для строковых
-- **Лайки** — один лайк на элемент с каждого пользователя
-- **Админ-панель** — блокировка, разблокировка, удаление пользователей, управление ролями
-
----
+1. Подключить каталог client как отдельный проект.
+2. Добавить VITE_API_URL со ссылкой на backend.
+3. При необходимости добавить VITE_IMGBB_API_KEY.
 
 ## Архитектурные решения
 
-**Почему фиксированные поля, а не dynamic columns?**
-Инвентарь использует фиксированную схему: по 3 поля каждого типа в таблице `Items`. Тип и заголовок полей хранятся в `InventoryFields`. Это позволяет делать агрегацию (`AVG`, `MIN`, `MAX`) простыми SQL-запросами без динамического SQL и позволяет редактировать поля инвентаря без миграций схемы.
+### Почему поля элементов не хранятся в JSON
 
-**Optimistic locking**
-Каждый инвентарь и каждый элемент хранит целочисленный `version`. При сохранении клиент передаёт текущую версию, сервер проверяет совпадение и возвращает `409 Conflict` при коллизии. Это защищает от потери данных при одновременном редактировании.
+По ТЗ у инвентаря допускается до трёх полей каждого типа. Поэтому в модели элемента используются фиксированные колонки, а описание полей хранится отдельно в InventoryField. Такой подход упрощает SQL-агрегации, фильтрацию и изменение конфигурации полей без динамического изменения схемы.
 
-**Сессии в PostgreSQL**
-Сессии хранятся в таблице `session` через `connect-pg-simple`. Это позволяет серверу перезапускаться (Render free tier засыпает) без разлогинивания пользователей.
+### Кастомный ID не является primary key
 
-- **Управление доступом** - public/private инвентари
+У каждого элемента есть глобальный UUID как технический идентификатор. Пользовательский customId хранится отдельно и уникален только в пределах одного инвентаря за счёт составного индекса по inventoryId и customId.
 
-## 🛠️ Установка
+### Optimistic locking
 
-```bash
-# Backend
-cd server
-npm install
-npm start
+Инвентари и элементы содержат поле version. Клиент передаёт текущую версию при обновлении, а сервер возвращает 409 Conflict, если запись уже изменилась.
 
-# Frontend
-cd client  
-npm install
-npm run dev
-```
+### Сессии в PostgreSQL
 
-## 📖 Архитектура
+Сессии сохраняются через connect-pg-simple в PostgreSQL. Это позволяет не терять авторизацию после перезапуска сервера.
 
-### Кастомные поля
-Конфигурация в `InventoryField`, данные в `Item` (textField1-3, numberField1-3, etc).
+### Обсуждения через Socket.IO
 
-### Real-time
-```javascript
-// Client
-socket.emit('sendComment', data);
-socket.on('newComment', (comment) => addToList(comment));
+Комментарии по инвентарю отправляются в комнату inventory:<id>, поэтому пользователи видят новые сообщения без перезагрузки страницы.
 
-// Server
-socket.on('sendComment', (data) => {
-  saveToDb(data);
-  io.to(room).emit('newComment', saved);
-});
-```
+## Основные сущности
 
-### Optimistic Locking
-Поле `version` в Inventory - инкрементируется при каждом update.
+- User: профиль, роль администратора, тема и язык интерфейса
+- Inventory: карточка инвентаря, права доступа, категория, теги, формат custom ID
+- InventoryField: конфигурация пользовательских полей
+- Item: элемент инвентаря с фиксированным набором колонок под кастомные поля
+- Discussion: сообщения во вкладке обсуждения
+- ItemLike: лайки элементов
+- InventoryAccess: список пользователей с правом записи
 
-## 🎨 UI особенности
+## Что ещё не выполнено по ТЗ
 
-- Без кнопок в строках таблицы (toolbar)
-- Responsive дизайн
-- Light/Dark режим
-- EN/RU локализация
+- Нет отдельной страницы item: редактирование сейчас открывается в modal внутри страницы инвентаря.
+- Личный кабинет реализован частично: таблица инвентарей с доступом пока собирается не из реального write-access списка.
+- Вкладка настроек инвентаря покрывает не все поля ТЗ: category, tags и image пока не редактируются в одном месте.
+- Статистика пока считает только количество элементов и агрегаты по числовым полям; топ значений для строковых полей не добавлен.
+- Custom ID работает в базовом режиме, но не закрывает все требования по форматированию и вспомогательным popover-подсказкам.
+- Тема и язык сохраняются локально в браузере; сохранение этих настроек в профиле пользователя не реализовано.
+- Интерфейс переведён не полностью: в части компонентов ещё есть жёстко прошитые строки.
+- Поиск сейчас ориентирован в первую очередь на инвентари; отдельный полнотекстовый поиск по данным item реализован не полностью.
 
-## 🎓 Для защиты проекта
 
-Подробный разбор архитектуры, сценария демо и вопросов на защите: `DEFENSE_GUIDE.md`.
 
-### Что уже закрывает ТЗ
 
-- Табличное представление инвентарей и элементов (без кнопок действий в строках, через toolbar).
-- Публичный просмотр инвентарей/элементов для неавторизованных пользователей.
-- Разделы инвентаря через вкладки: Items, Discussion, Settings (базовая часть готова).
-- Кастомные поля элементов через фиксированные колонки БД (`textField1..3`, `numberField1..3` и т.д.), без JSON-хранения.
-- Real-time обсуждение (Socket.IO): новые комментарии приходят без перезагрузки страницы.
-- Базовый optimistic locking для инвентаря через поле `version`.
 
-### Что показать на демонстрации (5–7 минут)
 
-1. Главная страница: таблицы последних и популярных инвентарей.
-2. Личный кабинет: мои инвентари и инвентари с доступом.
-3. Страница инвентаря:
-   - Items: добавление/редактирование/удаление через toolbar.
-   - Settings: изменение данных и сохранение с `version`.
-   - Discussion: комментарий в реальном времени из двух вкладок браузера.
-4. Кратко пояснить, почему поля не в JSON и как обеспечивается совместимость всех items одного inventory.
 
-### Почему такая архитектура
-
-- **PostgreSQL + Sequelize**: удобно делать агрегации и индексы, лучше для учебного ТЗ, чем document storage.
-- **Фиксированные колонки для кастомных полей**: соответствует ограничению «до 3 полей каждого типа», упрощает фильтрацию и статистику.
-- **`version` для optimistic locking**: защищает от silent overwrite при одновременном редактировании.
-- **Socket.IO для Discussion**: простой и надежный near real-time канал для обновлений 2–5 секунд.
-
-### Типовые вопросы преподавателя и короткие ответы
-
-- **Почему не JSON для хранения полей item?**  
-  Потому что нужны редактирование структуры полей, агрегации и предсказуемые SQL-запросы без full-scan и без сложной миграции данных.
-
-- **Как решается конфликт одновременного редактирования?**  
-  Клиент отправляет `version`, сервер сравнивает с текущей в БД. При расхождении возвращается конфликт, а клиент обновляет данные.
-
-- **Почему в таблице нет кнопок Edit/Delete в каждой строке?**  
-  Это требование ТЗ: действия вынесены в toolbar для выбранных строк.
-
-- **Как обеспечивается real-time в обсуждении?**  
-  Клиент подписывается на room инвентаря, сервер рассылает `newComment` всем участникам комнаты.
-
-### Границы текущего MVP
-
-Готова рабочая база для защиты core-части фронтенда. Остальные пункты ниже — запланированная доработка.
-
-## 📝 TODO
-
-- [ ] Custom ID Builder (Drag-and-Drop)
-- [ ] Fields управление (Drag-and-Drop) 
-- [ ] Access управление (autocomplete)
-- [ ] Statistics tab
-- [ ] Auto-save (7-10 сек)
-
----
-
-Разработчик: [Tvoe Imya]

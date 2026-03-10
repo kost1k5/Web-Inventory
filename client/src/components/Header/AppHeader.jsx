@@ -18,6 +18,8 @@ export default function AppHeader() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
+  // Сейчас язык и тема сохраняются локально в браузере.
+  // Для полного соответствия ТЗ эти настройки должны синхронизироваться и с профилем пользователя.
   const handleLanguageChange = (value) => {
     i18n.changeLanguage(value);
     localStorage.setItem('language', value);
@@ -28,6 +30,7 @@ export default function AppHeader() {
     navigate('/login');
   };
 
+  // Header одновременно решает две задачи: глобальный поиск и быстрый доступ к account actions.
   const userMenuItems = [
     {
       key: 'profile',

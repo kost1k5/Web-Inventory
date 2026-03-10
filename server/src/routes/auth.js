@@ -4,12 +4,11 @@ const router = express.Router();
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 const error = `${FRONTEND_URL}/login?error=auth_failed`;
 
-// 1. GET /api/auth/google - начинает OAuth
+// OAuth стартует на сервере, чтобы callback, session и Passport оставались в одном контуре.
 router.get('/google', 
   passport.authenticate('google', { scope: ['profile', 'email'] })
 );
 
-// 2. GET /api/auth/google/callback - Google редиректит сюда
 router.get('/google/callback',
   passport.authenticate('google', { failureRedirect: error }),
   (req, res) => {
@@ -17,8 +16,7 @@ router.get('/google/callback',
       req.logout(() => {});
       return res.redirect(`${FRONTEND_URL}/login?error=blocked`);
     }
-    // Явно сохраняем сессию в PostgreSQL перед редиректом
-    // (без этого redirect может уйти до того как async-запись в БД завершится)
+    // Перед redirect явно фиксируем session, иначе браузер может уйти раньше записи в store.
     req.session.save((err) => {
       if (err) console.error('Session save error:', err);
       res.redirect(`${FRONTEND_URL}/dashboard`);
@@ -28,7 +26,7 @@ router.get('/google/callback',
 
 
 
-// FACEBOOK ROUTES (временно отключены)
+// Facebook OAuth routes are disabled.
 /*
 router.get('/facebook', 
   passport.authenticate('facebook', { scope: ['profile', 'email'] })
@@ -42,7 +40,6 @@ router.get('/facebook/callback',
 );
 */
 
-// GITHUB ROUTES
 router.get('/github', 
   passport.authenticate('github', { scope: ['user:email'] })
 );
@@ -54,7 +51,7 @@ router.get('/github/callback',
       req.logout(() => {});
       return res.redirect(`${FRONTEND_URL}/login?error=blocked`);
     }
-    // Явно сохраняем сессию в PostgreSQL перед редиректом
+    // Поведение идентично Google callback: сначала session, потом redirect на frontend.
     req.session.save((err) => {
       if (err) console.error('Session save error:', err);
       res.redirect(`${FRONTEND_URL}/dashboard`);
@@ -71,6 +68,7 @@ router.post('/logout', (req, res) => {
   });
 });
 
+// Маршрут /me используется фронтендом как источник прав и текущего профиля.
 router.get('/me', (req, res) => {
   if (req.isAuthenticated() && !req.user?.isBlocked) {
     return res.json(req.user);

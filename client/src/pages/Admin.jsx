@@ -42,6 +42,8 @@ export function Admin() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
+  // Bulk-операции удобны для админки и укладываются в требование про toolbar,
+  // потому что действия вынесены из строк таблицы.
   const bulkUpdate = async (patch) => {
     if (!selectedUsers.length) return;
     try {

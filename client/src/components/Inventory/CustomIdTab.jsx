@@ -16,6 +16,7 @@ const palette = [
   { type: 'seq', label: 'Sequence' },
 ];
 
+// Элемент формата ID редактируется локально и сериализуется в JSON только при сохранении.
 function SortableElement({ element, onRemove, onChange, disabled }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: element.id, disabled });
   const { token } = theme.useToken();
@@ -66,6 +67,7 @@ function SortableElement({ element, onRemove, onChange, disabled }) {
   );
 }
 
+// Preview показывает будущую структуру ID без обращения к серверу.
 function buildPreview(elements) {
   const now = new Date();
   let seq = 12;
@@ -100,6 +102,8 @@ export function CustomIdTab({ inventory, onSave, readOnly = false }) {
   const { message } = App.useApp();
   const { t } = useTranslation();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+  // В UI храним служебный id для drag-and-drop.
+  // На сервер уходит только бизнес-описание элементов формата.
   const [elements, setElements] = useState(() => {
     try {
       const parsed = JSON.parse(inventory?.customIdFormat || '[]');
@@ -115,6 +119,7 @@ export function CustomIdTab({ inventory, onSave, readOnly = false }) {
 
   const preview = useMemo(() => buildPreview(elements), [elements]);
 
+  // Палитра задаёт допустимые типы сегментов custom ID.
   const addElement = (descriptor) => {
     if (readOnly) return;
 
@@ -138,6 +143,7 @@ export function CustomIdTab({ inventory, onSave, readOnly = false }) {
     setElements((prev) => prev.map((element) => (element.id === id ? { ...element, ...patch } : element)));
   };
 
+  // dnd-kit меняет только порядок сегментов, не их содержимое.
   const onDragEnd = (event) => {
     if (readOnly) return;
 
@@ -151,6 +157,7 @@ export function CustomIdTab({ inventory, onSave, readOnly = false }) {
     });
   };
 
+  // Сервер хранит формат как строку JSON в Inventory.customIdFormat.
   const saveFormat = async () => {
     try {
       const payload = elements.map((element) => {

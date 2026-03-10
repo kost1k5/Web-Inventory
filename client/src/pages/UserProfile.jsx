@@ -17,6 +17,7 @@ export function UserProfile() {
   useEffect(() => {
     (async () => {
       try {
+        // Профиль пользователя пока собирается клиентом из профиля и общего списка инвентарей.
         const [userData, allInventories] = await Promise.all([
           api.users.getById(userId),
           api.inventories.getAll(),

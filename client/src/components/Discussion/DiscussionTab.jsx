@@ -15,28 +15,27 @@ export function DiscussionTab({ inventoryId, user }) {
   const [socket, setSocket] = useState(null);
   const navigate = useNavigate();
   
-  // WebSocket подключение при открытии страницы
+  // Сокет создаётся только на время открытой вкладки discussion.
   useEffect(() => {
     const SERVER_URL = (import.meta.env.VITE_API_URL || 'https://web-inventory.onrender.com/api').replace('/api', '');
     const newSocket = io(SERVER_URL);
     setSocket(newSocket);
     
-    // Присоединяемся к комнате инвентаря
+    // Комната изолирует поток комментариев конкретного инвентаря.
     newSocket.emit('joinInventory', inventoryId);
     
-    // Слушаем новые комментарии от других пользователей
     newSocket.on('newComment', (comment) => {
       setComments((prev) => [...prev, comment]);
     });
     
-    // Cleanup при размонтировании
     return () => {
       newSocket.emit('leaveInventory', inventoryId);
       newSocket.disconnect();
     };
   }, [inventoryId]);
   
-  // Загрузка старых комментариев
+  // История обсуждения всегда подтягивается HTTP-запросом,
+  // а сокет отвечает только за догрузку новых сообщений.
   useEffect(() => {
     const fetchComments = async () => {
       try {
@@ -50,7 +49,8 @@ export function DiscussionTab({ inventoryId, user }) {
     fetchComments();
   }, [inventoryId]);
   
-  // Отправка комментария
+  // Если сокет активен, комментарий публикуется через него;
+  // иначе остаётся запасной HTTP-сценарий.
   const handleSubmit = async () => {
     if (!newComment.trim()) return;
     

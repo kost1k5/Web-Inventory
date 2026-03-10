@@ -14,6 +14,8 @@ const ItemLike = require('../models/ItemLike');
 
 const router = Router();
 
+// Централизованная проверка прав используется во всех ветках CRUD,
+// чтобы правила owner/admin/public/access-list не расходились между эндпоинтами.
 async function getAccessFlags(inventory, user) {
   if (!user) return { canView: true, canEdit: false, isOwner: false, isAdmin: false };
 
@@ -30,6 +32,8 @@ async function getAccessFlags(inventory, user) {
   return { canView: true, canEdit, isOwner, isAdmin };
 }
 
+// Формат custom ID хранится как JSON-строка в Inventory.
+// Если формат повреждён, маршрут откатывается к безопасному дефолту.
 function parseCustomIdFormat(rawFormat) {
   try {
     const parsed = JSON.parse(rawFormat);
@@ -39,6 +43,8 @@ function parseCustomIdFormat(rawFormat) {
   }
 }
 
+// Генерация custom ID выполняется только при создании item.
+// При последующем изменении формата существующие идентификаторы не пересчитываются.
 async function generateCustomId(inventory) {
   const formatElements = parseCustomIdFormat(inventory.customIdFormat);
   const now = new Date();
@@ -72,6 +78,7 @@ async function generateCustomId(inventory) {
   return parts.join('');
 }
 
+// Поиск объединяет полнотекстовый запрос PostgreSQL, ILIKE и совпадения по тегам.
 router.get('/search', async (req, res) => {
   try {
     const q = String(req.query.q || '').trim();
@@ -156,7 +163,6 @@ router.get('/users/suggest', requireAuth, async (req, res) => {
   }
 });
 
-// Список категорий (для форм создания/редактирования)
 router.get('/categories', async (_req, res) => {
   try {
     const categories = await Category.findAll({ order: [['name', 'ASC']] });
@@ -166,7 +172,6 @@ router.get('/categories', async (_req, res) => {
   }
 });
 
-// Autocomplete тегов
 router.get('/tags/suggest', async (req, res) => {
   try {
     const q = String(req.query.q || '').trim();
@@ -288,6 +293,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// Настройки инвентаря редактируют только owner и admin.
+// Пользователи с write access не управляют полями, доступами и форматом ID.
 router.put('/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
@@ -354,7 +361,7 @@ router.get('/:id/items', async (req, res) => {
 
     const itemIds = items.map((item) => item.id);
 
-    // Считаем лайки пакетом — без N+1
+    // Лайки считаются одним агрегирующим запросом, чтобы не делать N+1 по таблице ItemLike.
     const likeRows = itemIds.length
       ? await ItemLike.findAll({
           attributes: ['itemId', [fn('COUNT', col('id')), 'count']],
@@ -365,7 +372,7 @@ router.get('/:id/items', async (req, res) => {
 
     const likeMap = new Map(likeRows.map((row) => [row.itemId, Number(row.get('count')) || 0]));
 
-    // Если пользователь авторизован — получаем его лайки тоже пакетом
+    // Состояние likedByMe тоже загружается пачкой для всех строк таблицы.
     let myLikeSet = new Set();
     if (req.user) {
       const myLikes = await ItemLike.findAll({
@@ -393,6 +400,8 @@ router.get('/:id/items', async (req, res) => {
   }
 });
 
+// При создании item custom ID может прийти вручную или быть сгенерирован на сервере.
+// Уникальность внутри инвентаря дополнительно контролируется индексом в БД.
 router.post('/:id/items', requireAuth, async (req, res) => {
   try {
     const inventoryId = req.params.id;
@@ -428,6 +437,8 @@ router.post('/:id/items', requireAuth, async (req, res) => {
   }
 });
 
+// Optimistic locking для item защищает от silent overwrite,
+// когда несколько пользователей редактируют одну и ту же запись параллельно.
 router.put('/:id/items/:itemId', requireAuth, async (req, res) => {
   try {
     const inventoryId = req.params.id;
@@ -505,6 +516,8 @@ router.get('/:id/fields', async (req, res) => {
   }
 });
 
+// Поля инвентаря описывают отображение фиксированных колонок Item,
+// а не создают новую схему таблицы на лету.
 router.post('/:id/fields', requireAuth, async (req, res) => {
   try {
     const inventoryId = req.params.id;
@@ -521,7 +534,7 @@ router.post('/:id/fields', requireAuth, async (req, res) => {
       return res.status(400).json({ error: `Limit reached for field type: ${fieldType}` });
     }
 
-    // Ищем первый свободный слот среди [0, 1, 2] — count может не совпадать с индексом после удалений
+    // Ищем свободный slot по индексу, потому что после удаления count уже не отражает занятые позиции.
     const existingFields = await InventoryField.findAll({
       where: { inventoryId, fieldType },
       attributes: ['fieldIndex'],
@@ -531,7 +544,7 @@ router.post('/:id/fields', requireAuth, async (req, res) => {
     if (fieldIndex === undefined) {
       return res.status(400).json({ error: `Limit reached for field type: ${fieldType}` });
     }
-    // Автоматически назначаем order = текущее кол-во всех полей инвентаря
+    // order хранится отдельно и определяет порядок в форме и таблице.
     const totalCount = await InventoryField.count({ where: { inventoryId } });
     const order = totalCount + 1;
 
@@ -624,6 +637,7 @@ router.get('/:id/access', requireAuth, async (req, res) => {
   }
 });
 
+// Access list заменяется целиком, чтобы клиент мог отправлять финальное состояние списка.
 router.put('/:id/access', requireAuth, async (req, res) => {
   try {
     const inventory = await Inventory.findByPk(req.params.id);
@@ -666,6 +680,8 @@ router.get('/:id/discussions', async (req, res) => {
   }
 });
 
+// Discussion поддерживает и обычный HTTP POST, и доставку через Socket.IO.
+// Это позволяет сохранить работоспособность даже без активного сокет-соединения.
 router.post('/:id/discussions', requireAuth, async (req, res) => {
   try {
     const text = String(req.body.text || '').trim();
@@ -706,6 +722,8 @@ router.get('/:id/items/:itemId/likes', async (req, res) => {
   }
 });
 
+// Один пользователь может иметь не более одного лайка на item.
+// Повторный POST работает как toggle.
 router.post('/:id/items/:itemId/likes', requireAuth, async (req, res) => {
   try {
     const { itemId } = req.params;

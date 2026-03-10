@@ -7,6 +7,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Текущее состояние сессии запрашивается при старте приложения и после OAuth redirect.
   const checkAuth = async () => {
     try {
       const response = await fetch(`${BASE_URL}/auth/me`, {
@@ -27,22 +28,22 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Logout разрывает серверную сессию и синхронизирует локальный auth-state.
   const logout = async () => {
     try {
       const response = await fetch(`${BASE_URL}/auth/logout`, {
-        method: 'POST', // ← Отправляем команду серверу "выйди"
-        credentials: 'include', // ← Отправляем куки с сессией
+        method: 'POST',
+        credentials: 'include',
       });
 
       if (response.ok) {
-        setUser(null); // Очищаем пользователя в контексте
+        setUser(null);
       }
     } catch (error) {
       console.error('Error logging out:', error);
     }
   };
 
-  // Проверяем авторизацию 1 раз при монтировании компонента
   useEffect(() => {
     checkAuth();
   }, []);

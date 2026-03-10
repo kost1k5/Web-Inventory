@@ -1,5 +1,6 @@
 import { Card, Col, Row, Statistic, Table } from 'antd';
 
+// Преобразует описание поля в имя физической колонки Item.
 function getFieldName(fieldType, fieldIndex) {
   const typeMap = {
     text: 'textField',
@@ -12,6 +13,8 @@ function getFieldName(fieldType, fieldIndex) {
 }
 
 export function StatsTab({ items, fields }) {
+  // Сейчас агрегируются только numeric fields.
+  // Для строковых top-values и диапазонов по другим типам нужна отдельная витрина.
   const numberFields = fields.filter((field) => field.fieldType === 'number');
 
   const rows = numberFields.map((field) => {

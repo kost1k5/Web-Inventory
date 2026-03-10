@@ -6,6 +6,8 @@ export function InventorySetting({ inventory, onSave, onDraftChange, readOnly = 
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
 
+    // Форма редактирует только базовые настройки.
+    // Доступы, поля и custom ID вынесены в отдельные вкладки.
     useEffect(()=>{
         form.setFieldsValue({
             title: inventory.title,

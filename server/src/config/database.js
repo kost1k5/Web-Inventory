@@ -1,12 +1,11 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
-// Render даёт DATABASE_URL, локально используем отдельные переменные
 const sequelize = process.env.DATABASE_URL
   ? new Sequelize(process.env.DATABASE_URL, {
       dialect: 'postgres',
       dialectOptions: {
-        ssl: { require: true, rejectUnauthorized: false }, // Render требует SSL
+        ssl: { require: true, rejectUnauthorized: false },
       },
       logging: false,
     })
