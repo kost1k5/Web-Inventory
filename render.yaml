@@ -33,3 +33,7 @@ services:
         sync: false
       - key: DROPBOX_REFRESH_TOKEN
         sync: false
+      - key: MAILGUN_API_KEY
+        sync: false
+      - key: MAILGUN_DOMAIN
+        sync: false

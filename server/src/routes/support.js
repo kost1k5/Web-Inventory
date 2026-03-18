@@ -2,6 +2,7 @@ const { Router } = require('express');
 const { requireAuth } = require('../middleware/auth');
 const User = require('../models/User');
 const Inventory = require('../models/Inventory');
+const { sendEmailToAdmins } = require('../services/emailService');
 
 const router = Router();
 
@@ -100,6 +101,8 @@ router.post('/support-tickets', requireAuth, async (req, res) => {
       const errText = await uploadResp.text();
       return res.status(502).json({ error: 'Dropbox upload failed', details: errText });
     }
+
+    await sendEmailToAdmins(adminEmails, payload);
 
     return res.status(201).json({ ticketId, dropboxPath, uploadedAt: now });
   } catch (e) {

@@ -209,6 +209,10 @@ async function start() {
     const defaultCategories = ['Equipment', 'Furniture', 'Book', 'Other'];
     for (const name of defaultCategories) {
       await Category.findOrCreate({ where: { name }, defaults: { name } });
+      // Запускаем polling сервис для автоматизации поддержки тикетов
+      const { startPolling } = require('./services/ticketPollingService');
+      startPolling();
+
     }
 
     server.listen(PORT, () => {
