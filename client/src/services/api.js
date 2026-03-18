@@ -1,4 +1,9 @@
 const BASE_URL = import.meta.env.VITE_API_URL || 'https://web-inventory.onrender.com/api';
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> ad1d5acb5eaf6d522eb0f17c8d025c0493e65d50
 async function request(path, options = {}) {
   const response = await fetch(`${BASE_URL}${path}`, {
     credentials: 'include',
