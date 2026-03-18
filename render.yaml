@@ -27,3 +27,9 @@ services:
         value: https://web-inventory.onrender.com/api/auth/github/callback
       - key: GOOGLE_CALLBACK_URL
         value: https://web-inventory.onrender.com/api/auth/google/callback
+      - key: DROPBOX_APP_KEY
+        sync: false
+      - key: DROPBOX_APP_SECRET
+        sync: false
+      - key: DROPBOX_REFRESH_TOKEN
+        sync: false
