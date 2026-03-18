@@ -200,9 +200,11 @@ export function InventoryDetail() {
         ellipsis: true,
         render: (value) => {
           if (field.fieldType === 'checkbox')
-            return value
+            return value === true
               ? <CheckOutlined style={{ color: '#52c41a' }} />
-              : <CloseOutlined style={{ color: '#ff4d4f' }} />;
+              : value === false
+                ? <CloseOutlined style={{ color: '#ff4d4f' }} />
+                : <Typography.Text type="secondary">—</Typography.Text>;
           if (field.fieldType === 'document' && value)
             return <a href={value} target="_blank" rel="noreferrer">Ссылка</a>;
           return value ?? <Typography.Text type="secondary">—</Typography.Text>;

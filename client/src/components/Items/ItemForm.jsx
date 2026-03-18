@@ -43,6 +43,7 @@ export function ItemForm({ fields = [], onSubmit, initialValues }) {
           key={field.id}
           label={field.title}
           name={getFieldName(field.fieldType, field.fieldIndex)}
+          valuePropName={field.fieldType === 'checkbox' ? 'checked' : 'value'}
           tooltip={field.description || undefined}
         >
           {field.fieldType === 'text' && <Input />}
