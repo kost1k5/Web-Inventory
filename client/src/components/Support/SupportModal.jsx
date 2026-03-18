@@ -28,7 +28,7 @@ export default function SupportModal({ open, onClose }) {
             />
           </Form.Item>
           <Button type="primary" onClick={onClose} >{t('support.cancel')}</Button>
-          <Button type="primary" htmlType='submit' style={{ marginRight: 8 }}>{t('support.submit')}</Button>
+          <Button type="primary" htmlType='submit' style={{ marginLeft: 8 }}>{t('support.submit')}</Button>
         </Form>
       </Modal>)
         }

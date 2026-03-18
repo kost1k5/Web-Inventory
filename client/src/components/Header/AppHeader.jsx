@@ -125,6 +125,7 @@ const handleThemeChange = async (checked) => {
           />
           <Button
   type="text"
+  color='red'
   icon={<QuestionCircleOutlined />}
   onClick={onOpenSupportTicket}
 />
