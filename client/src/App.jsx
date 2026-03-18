@@ -1,6 +1,6 @@
 import { ConfigProvider, Layout, theme, App as AntApp, Button } from 'antd';
 import { useState } from 'react';
-// import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useTheme } from './hooks/useTheme';
 import AppHeader from './components/Header/AppHeader';
@@ -11,8 +11,7 @@ import { InventoryCreate } from './pages/InventoryCreate';
 import { InventoryDetail } from './pages/InventoryDetail';
 import { Admin } from './pages/Admin';
 import { UserProfile } from './pages/UserProfile';
-import SupportModal from './components/Support/SupportModal'
-import { useTranslation } from 'react-i18next';
+import SupportModal from './components/Support/SupportModal';
 
 const { Content } = Layout;
 
@@ -44,6 +43,7 @@ const [open, setOpen] = useState(false);
               <div style={{ textAlign: 'center', padding: '12px' }}>
   <Button type="link" onClick={() => setOpen(true)}> {t('support.createTicket')} </Button>
 </div>
+          <SupportModal open={open} onClose={() => setOpen(false)} />
           </Layout>
         </AntApp>
       </ConfigProvider>

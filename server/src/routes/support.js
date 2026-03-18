@@ -5,6 +5,26 @@ const Inventory = require('../models/Inventory');
 
 const router = Router();
 
+// Refresh token живёт бессрочно — каждый запрос получает свежий access token.
+async function getDropboxAccessToken() {
+  const resp = await fetch('https://api.dropbox.com/oauth2/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'refresh_token',
+      refresh_token: process.env.DROPBOX_REFRESH_TOKEN,
+      client_id: process.env.DROPBOX_APP_KEY,
+      client_secret: process.env.DROPBOX_APP_SECRET,
+    }),
+  });
+  if (!resp.ok) {
+    const text = await resp.text();
+    throw new Error(`Dropbox token refresh failed: ${text}`);
+  }
+  const data = await resp.json();
+  return data.access_token;
+}
+
 router.post('/support-tickets', requireAuth, async (req, res) => {
   try {
     const { summary, priority, link, inventoryId } = req.body || {};
@@ -51,10 +71,7 @@ router.post('/support-tickets', requireAuth, async (req, res) => {
       source: 'web-inventory',
     };
 
-    const dropboxToken = process.env.DROPBOX_ACCESS_TOKEN;
-    if (!dropboxToken) {
-      return res.status(500).json({ error: 'DROPBOX_ACCESS_TOKEN is not configured' });
-    }
+    const dropboxToken = await getDropboxAccessToken();
 
     const dropboxPath = `/SupportTickets/${ticketId}.json`;
     const content = JSON.stringify(payload, null, 2);
