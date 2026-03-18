@@ -102,9 +102,14 @@ router.post('/support-tickets', requireAuth, async (req, res) => {
       return res.status(502).json({ error: 'Dropbox upload failed', details: errText });
     }
 
-    await sendEmailToAdmins(adminEmails, payload);
+    const emailResult = await sendEmailToAdmins(adminEmails, payload);
 
-    return res.status(201).json({ ticketId, dropboxPath, uploadedAt: now });
+    return res.status(201).json({
+      ticketId,
+      dropboxPath,
+      uploadedAt: now,
+      email: emailResult,
+    });
   } catch (e) {
     console.error('[support] Failed to create ticket:', e);
     return res.status(500).json({ error: 'Failed to create support ticket', details: e.message });

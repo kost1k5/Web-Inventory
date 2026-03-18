@@ -9,13 +9,13 @@ const client = mg.client({ username: 'api', key: process.env.MAILGUN_API_KEY });
 async function sendEmailToAdmins(admins, ticketData) {
   if (!process.env.MAILGUN_API_KEY || !domain) {
     console.error('[email] Missing MAILGUN_API_KEY or MAILGUN_DOMAIN');
-    return;
+    return { ok: false, reason: 'missing_mailgun_env' };
   }
 
   const adminEmails = admins.filter(Boolean);
   if (adminEmails.length === 0) {
     console.log('[email] No admins to notify');
-    return;
+    return { ok: false, reason: 'no_admin_recipients' };
   }
 
   const subject = `[Support] ${ticketData.ticketId} — ${ticketData.Priority} Priority`;
@@ -39,12 +39,20 @@ async function sendEmailToAdmins(admins, ticketData) {
       html,
     });
     console.log('[email] Sent successfully:', response.id);
+    return { ok: true, id: response.id };
   } catch (e) {
     console.error('[email] Failed:', {
       message: e?.message,
       status: e?.status,
       details: e?.details,
     });
+    return {
+      ok: false,
+      reason: 'mailgun_send_failed',
+      error: e?.message,
+      status: e?.status,
+      details: e?.details,
+    };
   }
 }
 
