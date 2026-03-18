@@ -7,6 +7,10 @@ const router = Router();
 
 // Refresh token живёт бессрочно — каждый запрос получает свежий access token.
 async function getDropboxAccessToken() {
+  if (!process.env.DROPBOX_REFRESH_TOKEN || !process.env.DROPBOX_APP_KEY || !process.env.DROPBOX_APP_SECRET) {
+    throw new Error('Missing Dropbox environment variables: DROPBOX_REFRESH_TOKEN, DROPBOX_APP_KEY, or DROPBOX_APP_SECRET');
+  }
+  
   const resp = await fetch('https://api.dropbox.com/oauth2/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

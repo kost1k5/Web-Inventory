@@ -98,7 +98,6 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json());
-app.use('/api', supportRouter);
 app.use('/api/upload', uploadsRouter);
 
 // Отдельный pg Pool используется и для connect-pg-simple, и для настройки SSL в hosted PostgreSQL.
@@ -158,6 +157,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/inventories', inventoriesRouter);
+app.use('/api', supportRouter);
 app.use('/api', supportRouter);
 
 io.on('connection', (socket) => {
