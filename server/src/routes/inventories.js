@@ -11,6 +11,7 @@ const InventoryField = require('../models/InventoryField');
 const Item = require('../models/Item');
 const Discussion = require('../models/Discussion');
 const ItemLike = require('../models/ItemLike');
+const { title } = require('process');
 
 const router = Router();
 
@@ -316,7 +317,7 @@ router.put('/:id', requireAuth, async (req, res) => {
     }
 
     await inventory.update({
-      title: title ?? inventory.title,
+      title: title ?? inventory.title ,
       description: description ?? inventory.description,
       isPublic: typeof isPublic === 'boolean' ? isPublic : inventory.isPublic,
       imageUrl: imageUrl ?? inventory.imageUrl,

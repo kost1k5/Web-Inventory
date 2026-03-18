@@ -34,6 +34,7 @@ const InventoryField = sequelize.define('InventoryField', {
   title: {
     type: DataTypes.STRING,
     allowNull: false,
+    
   },
   description: {
     type: DataTypes.TEXT,

@@ -33,6 +33,8 @@ function SortableField({ field, disabled, onToggle, onRemove }) {
     cursor: disabled ? 'default' : 'grab',
   };
 
+
+
   return (
     <div ref={setNodeRef} style={containerStyle}>
       <Flex justify="space-between" align="center" wrap="wrap" gap="small">

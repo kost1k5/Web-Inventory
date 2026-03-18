@@ -184,6 +184,21 @@ const resources = {
       'customId.hint': 'Add elements, reorder via drag-and-drop, then save the format.',
       'customId.save': 'Save Format',
       'customId.remove': 'Remove',
+
+      //Support
+      'support.help' : 'Help & Support',
+      'support.createTicket': 'Create Support Ticket',
+      'support.modalTitle': 'Submit a Support Ticket',
+      'support.summary': 'Summary',
+      'support.summaryPlaceholder': 'Briefly describe the problem',
+      'support.priority': 'Priority',
+      'support.priorityHigh': 'High',
+      'support.priorityAverage': 'Average',
+      'support.priorityLow': 'Low',
+      'support.submit': 'Submit',
+      'support.cancel': 'Cancel',
+      'support.loginRequired': 'You need to be logged in to submit a support ticket.',
+      'support.success': 'Support ticket submitted successfully!',
     },
   },
   ru: {
@@ -375,6 +390,21 @@ const resources = {
       'customId.hint': 'Добавляйте элементы, меняйте порядок drag-and-drop, затем сохраните формат.',
       'customId.save': 'Сохранить формат',
       'customId.remove': 'Удалить',
+
+      //Support
+      'support.help' : 'Помощь и поддержка',
+      'support.createTicket': 'Создать тикет поддержки',
+      'support.modalTitle': 'Создать тикет поддержки',
+      'support.summary': 'Краткое описание',
+      'support.summaryPlaceholder': 'Коротко опишите проблему',
+      'support.priority': 'Приоритет',
+      'support.priorityHigh': 'Высокий',
+      'support.priorityAverage': 'Средний',
+      'support.priorityLow': 'Низкий',
+      'support.submit': 'Отправить',
+      'support.cancel': 'Отмена',
+      'support.loginRequired': 'Войдите в систему, чтобы создать тикет поддержки',
+      'support.success': 'Тикет поддержки успешно создан',
     },
   },
 };

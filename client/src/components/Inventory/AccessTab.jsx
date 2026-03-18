@@ -33,8 +33,7 @@ export function AccessTab({ inventoryId, canManage }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inventoryId, canManage]);
 
-  // Autocomplete ищет и по имени, и по email,
-  // чтобы соответствовать сценарию выдачи доступа из ТЗ.
+  // Autocomplete ищет и по имени, и по email
   const handleSuggest = async (value) => {
     setSearch(value);
     if (!value || !canManage) {

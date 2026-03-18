@@ -6,7 +6,7 @@ import { api } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 
 export function Admin() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, checkAuth } = useAuth();
   const navigate = useNavigate();
   const { message } = App.useApp();
   const [users, setUsers] = useState([]);
@@ -48,6 +48,10 @@ export function Admin() {
     if (!selectedUsers.length) return;
     try {
       await Promise.all(selectedUsers.map((candidate) => api.admin.updateUser(candidate.id, patch)));
+      const touchedCurrentUser = selectedUsers.some((candidate) => candidate.id === user?.id);
+      if (touchedCurrentUser) {
+        await checkAuth();
+      }
       await loadUsers();
       message.success('Изменения применены');
     } catch (error) {

@@ -5,12 +5,20 @@ import { ThemeContext } from './ThemeContext';
 
 export function ThemeProvider({ children }) {
     // Тема хранится локально, чтобы интерфейс не мигал при перезагрузке страницы.
-    const [isDarkMode, setIsDarkMode] = useState(localStorage.getItem('isDarkMode') === 'true');
-    const toggleTheme = () =>{
-        const newMode = !isDarkMode
-        setIsDarkMode(newMode);
-        localStorage.setItem('isDarkMode', newMode);
-       
-}
- return <ThemeContext.Provider value={{ isDarkMode, toggleTheme }}>{children}</ThemeContext.Provider>
+    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+    const isDarkMode = theme === 'dark';
+
+    const installTheme = (newTheme) => {
+        setTheme(newTheme);
+        localStorage.setItem('theme', newTheme);
+    }
+//     const toggleTheme = () =>{
+//         const isLightMode = theme === 'light';
+//         setTheme(isLightMode ? 'dark' : 'light');
+//         localStorage.setItem('theme', isLightMode ? 'dark' : 'light'); 
+// }
+
+
+ return <ThemeContext.Provider value={{ installTheme, isDarkMode, theme}}>{children}
+ </ThemeContext.Provider>
     }

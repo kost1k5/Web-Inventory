@@ -16,7 +16,7 @@ export function Login() {
 
   const errorParam = searchParams.get('error');
 
-  // После успешного OAuth пользователь возвращается на эту страницу уже с активной сессией.
+  
   useEffect(() => {
     if (user && !loading) {
       navigate('/dashboard');

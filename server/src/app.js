@@ -112,26 +112,39 @@ const pgPool = new Pool(
       }
 );
 
-app.use(
-  session({
-    store: new pgSession({
-      pool: pgPool,
-      createTableIfMissing: true,
-    }),
-    secret: process.env.SESSION_SECRET || 'change-me-in-production',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000,
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    },
-  })
-);
+const sessionMiddleware = session({
+  store: new pgSession({
+    pool: pgPool,
+    createTableIfMissing: true,
+  }),
+  secret: process.env.SESSION_SECRET || 'change-me-in-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000,
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  },
+});
+
+app.use(sessionMiddleware);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Socket.IO использует ту же server-side session, чтобы не полагаться на userId из клиента.
+io.engine.use((req, _res, next) => {
+  sessionMiddleware(req, {}, next);
+});
+
+io.engine.use((req, _res, next) => {
+  passport.initialize()(req, {}, next);
+});
+
+io.engine.use((req, _res, next) => {
+  passport.session()(req, {}, next);
+});
 
 // Health-check нужен для Render и ручной диагностики сервиса.
 app.get('/api/health', (req, res) => {
@@ -155,11 +168,14 @@ io.on('connection', (socket) => {
 
   socket.on('sendComment', async ({ inventoryId, text, userId }) => {
     try {
-      if (!inventoryId || !text || !userId) return;
+      const sessionUser = socket.request.user;
+      if (!inventoryId || !text || !sessionUser?.id) return;
+      if (sessionUser.isBlocked) return;
+      if (userId && userId !== sessionUser.id) return;
 
       const created = await Discussion.create({
         inventoryId,
-        userId,
+        userId: sessionUser.id,
         text: String(text).trim(),
       });
 
