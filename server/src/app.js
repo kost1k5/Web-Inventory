@@ -102,6 +102,7 @@ app.use(cors({
     if (isAllowedWebOrigin(origin)) {
       callback(null, true);
     } else {
+      console.warn('[cors] Blocked origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -168,7 +169,6 @@ app.use('/api/auth', authRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/inventories', inventoriesRouter);
 app.use('/api', supportRouter);
-app.use('/api', supportRouter);
 
 io.on('connection', (socket) => {
   // Каждому inventory соответствует отдельная room, чтобы не рассылать обсуждения глобально.
@@ -219,10 +219,6 @@ async function start() {
     const defaultCategories = ['Equipment', 'Furniture', 'Book', 'Other'];
     for (const name of defaultCategories) {
       await Category.findOrCreate({ where: { name }, defaults: { name } });
-      // Запускаем polling сервис для автоматизации поддержки тикетов
-      const { startPolling } = require('./services/ticketPollingService');
-      startPolling();
-
     }
 
     server.listen(PORT, () => {
