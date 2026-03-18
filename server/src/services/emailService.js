@@ -7,6 +7,11 @@ const domain = process.env.MAILGUN_DOMAIN;
 const client = mg.client({ username: 'api', key: process.env.MAILGUN_API_KEY });
 
 async function sendEmailToAdmins(admins, ticketData) {
+  if (!process.env.MAILGUN_API_KEY || !domain) {
+    console.error('[email] Missing MAILGUN_API_KEY or MAILGUN_DOMAIN');
+    return;
+  }
+
   const adminEmails = admins.filter(Boolean);
   if (adminEmails.length === 0) {
     console.log('[email] No admins to notify');
@@ -26,15 +31,20 @@ async function sendEmailToAdmins(admins, ticketData) {
   `;
 
   try {
+    const fromAddress = `Mailgun Sandbox <postmaster@${domain}>`;
     const response = await client.messages.create(domain, {
-      from: `Support <noreply@${domain}>`,
-      to: adminEmails,
+      from: fromAddress,
+      to: adminEmails.join(','),
       subject,
       html,
     });
     console.log('[email] Sent successfully:', response.id);
   } catch (e) {
-    console.error('[email] Failed:', e.message);
+    console.error('[email] Failed:', {
+      message: e?.message,
+      status: e?.status,
+      details: e?.details,
+    });
   }
 }
 
