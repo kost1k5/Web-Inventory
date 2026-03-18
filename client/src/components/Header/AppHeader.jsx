@@ -20,32 +20,31 @@ export default function AppHeader({onOpenSupportTicket}) {
   const { user, logout, checkAuth } = useAuth();
   const navigate = useNavigate();
 
-const handleThemeChange = async () => {
- console.log('theme click', { user, isDarkMode });
-const  newTheme = isDarkMode ? 'light' : 'dark';
-    try {
-      
-      if (!user){
-        installTheme(newTheme);
-        return;
-      }
-       
-    await api.settings.updateSettings({ theme: newTheme });
-    console.log('user?', user);
+const handleThemeChange = async (checked) => {
+  const previousTheme = theme;
+  const newTheme = checked ? 'dark' : 'light';
 
-    installTheme(newTheme);
-    await checkAuth(); // Обновляем данные пользователя, чтобы синхронизировать тему из БД
-    
-    } catch (error) {
-      console.error('Failed to update theme setting:', error);
-    }
-  };
+  // Мгновенно применяем тему в UI, затем подтверждаем изменение на сервере.
+  installTheme(newTheme);
+
+  if (!user) {
+    return;
+  }
+
+  try {
+    await api.settings.updateSettings({ theme: newTheme });
+    await checkAuth();
+  } catch (error) {
+    installTheme(previousTheme);
+    console.error('Failed to update theme setting:', error);
+  }
+};
 
     useEffect(() => {
-    if (user?.theme && theme !== user.theme) {
+    if (user?.theme) {
       installTheme(user.theme)
     };
-  }, [user?.theme, theme, installTheme]);
+  }, [user?.theme, installTheme]);
 
   const handleLanguageChange = async (value) => {
     try {

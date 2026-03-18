@@ -72,6 +72,7 @@ router.post('/logout', (req, res) => {
 
 // Маршрут /me используется как источник прав и текущего профиля.
 router.get('/me', (req, res) => {
+  res.set('Cache-Control', 'no-store');
   if (req.isAuthenticated() && !req.user?.isBlocked) {
     return res.json(req.user);
   }
@@ -124,11 +125,11 @@ if (theme !== undefined) {
 }
     
    
-  if (Object.keys(updates).length === 0) {
-  return res.status(400).json({ error: 'No changes provided' });
-}
+  if (Object.keys(updates).length > 0) {
+    await user.update(updates);
+  }
 
-await user.update(updates);
+res.set('Cache-Control', 'no-store');
 
 return res.json({
   settings: {
