@@ -62,6 +62,18 @@ const adminRouter = require('./routes/admin');
 
 const app = express();
 
+const normalizeOrigin = (value) => (value ? value.replace(/\/$/, '') : value);
+const configuredFrontendOrigin = normalizeOrigin(process.env.FRONTEND_URL);
+const isAllowedWebOrigin = (origin) => {
+  if (!origin) return true;
+  const normalized = normalizeOrigin(origin);
+  if (normalized === configuredFrontendOrigin) return true;
+  if (normalized === 'http://localhost:5173' || normalized === 'http://localhost:5174') return true;
+  if (normalized.startsWith('http://localhost:')) return true;
+  if (/^https:\/\/web-inventory(?:-[a-z0-9-]+)?\.vercel\.app$/i.test(normalized)) return true;
+  return false;
+};
+
 // За reverse proxy приложение должно доверять заголовкам прокси,
 // иначе secure-cookie в production не будут выставляться корректно.
 app.set('trust proxy', 1);
@@ -72,10 +84,13 @@ const server = http.createServer(app);
 // Остальные сценарии работают через обычный HTTP API.
 const io = new Server(server, {
   cors: {
-    origin: [
-      process.env.FRONTEND_URL,
-      /^http:\/\/localhost:\d+$/,
-    ].filter(Boolean),
+    origin: (origin, callback) => {
+      if (isAllowedWebOrigin(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   },
 });
@@ -84,12 +99,7 @@ const PORT = process.env.PORT || 5000;
 // CORS разрешает production frontend и локальные Vite-порты.
 app.use(cors({
   origin: function (origin, callback) {
-    const allowed = [
-      process.env.FRONTEND_URL,
-      'http://localhost:5173',
-      'http://localhost:5174',
-    ].filter(Boolean);
-    if (!origin || allowed.includes(origin) || origin.startsWith('http://localhost:')) {
+    if (isAllowedWebOrigin(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
