@@ -17,7 +17,10 @@ export function DiscussionTab({ inventoryId, user }) {
   
   // Сокет создаётся только на время открытой вкладки discussion.
   useEffect(() => {
-    const SERVER_URL = (import.meta.env.VITE_API_URL || 'https://web-inventory.onrender.com/api').replace('/api', '');
+    const SERVER_URL = (
+      import.meta.env.VITE_API_URL
+      || (import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://web-inventory.onrender.com/api')
+    ).replace('/api', '');
     const newSocket = io(SERVER_URL);
     setSocket(newSocket);
     

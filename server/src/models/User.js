@@ -33,7 +33,7 @@ const User = sequelize.define('User', {
   },
   theme: {
     type: DataTypes.STRING,
-    defaultValue: 'light',
+    defaultValue: 'dark',
   },
   language: {
     type: DataTypes.STRING,
