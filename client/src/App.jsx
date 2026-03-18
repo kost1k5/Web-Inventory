@@ -1,4 +1,4 @@
-import { ConfigProvider, Layout, theme, App as AntApp } from 'antd';
+import { ConfigProvider, Layout, theme, App as AntApp, Button } from 'antd';
 import { useState } from 'react';
 // import { useTranslation } from 'react-i18next';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
@@ -12,10 +12,12 @@ import { InventoryDetail } from './pages/InventoryDetail';
 import { Admin } from './pages/Admin';
 import { UserProfile } from './pages/UserProfile';
 import SupportModal from './components/Support/SupportModal'
+import { useTranslation } from 'react-i18next';
 
 const { Content } = Layout;
 
 function App() {
+  const { t } = useTranslation();
   const { isDarkMode } = useTheme();
 const [open, setOpen] = useState(false);
   return (
@@ -39,7 +41,9 @@ const [open, setOpen] = useState(false);
                 <Route path="*" element={<Navigate to="/home" replace />} />  
               </Routes>
             </Content>
-              <SupportModal open={open} onClose={() => setOpen(false)} />
+              <div style={{ textAlign: 'center', padding: '12px' }}>
+  <Button type="link" onClick={() => setOpen(true)}> {t('support.createTicket')} </Button>
+</div>
           </Layout>
         </AntApp>
       </ConfigProvider>

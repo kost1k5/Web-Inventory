@@ -113,5 +113,13 @@ export const api = {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
-  }
+  }, 
+
+  support: {
+  createTicket: (data) => request('/support-tickets', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+},
+
 };

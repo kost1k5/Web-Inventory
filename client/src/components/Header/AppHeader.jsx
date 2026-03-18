@@ -125,9 +125,9 @@ const handleThemeChange = async (checked) => {
           />
           <Button
   type="text"
-  color='red'
-  icon={<QuestionCircleOutlined />}
+  icon={<QuestionCircleOutlined style={{ fontSize: 20, color: '#faad14' }} />}
   onClick={onOpenSupportTicket}
+  style={{ width: 36, height: 36 }}
 />
           <Select
             value={i18n.language}

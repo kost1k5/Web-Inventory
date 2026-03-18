@@ -13,6 +13,10 @@ const passport = require('./config/passport');
 const Item = require('./models/Item');  
 const Discussion = require('./models/Discussion');
 const ItemLike = require('./models/ItemLike');
+const supportRouter = require('./routes/support');
+
+
+
 
 const inventoriesRouter = require('./routes/inventories');
 
@@ -94,6 +98,7 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json());
+app.use('/api', supportRouter);
 app.use('/api/upload', uploadsRouter);
 
 // Отдельный pg Pool используется и для connect-pg-simple, и для настройки SSL в hosted PostgreSQL.
@@ -153,6 +158,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/inventories', inventoriesRouter);
+app.use('/api', supportRouter);
 
 io.on('connection', (socket) => {
   // Каждому inventory соответствует отдельная room, чтобы не рассылать обсуждения глобально.
@@ -189,6 +195,7 @@ io.on('connection', (socket) => {
     }
   });
 });
+
 
 async function start() {
   try {
