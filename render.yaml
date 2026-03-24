@@ -41,3 +41,5 @@ services:
         sync: false
       - key: RESEND_FROM
         sync: false
+      - key: SUPPORT_TICKET_EMAIL_ENABLED
+        value: "false"

@@ -71,6 +71,7 @@ router.post('/support-tickets', requireAuth, async (req, res) => {
       },
       Inventory: inventoryTitle,
       Link: String(link).trim(),
+      "Admins' e-mail addresses": adminEmails,
       "Admins' emails": adminEmails,
       submittedAt: now,
       source: 'web-inventory',
@@ -108,6 +109,7 @@ router.post('/support-tickets', requireAuth, async (req, res) => {
       ticketId,
       dropboxPath,
       uploadedAt: now,
+      integrationMode: process.env.SUPPORT_TICKET_EMAIL_ENABLED === 'true' ? 'dropbox+backend-email' : 'dropbox-only',
       email: emailResult,
     });
   } catch (e) {

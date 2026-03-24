@@ -1,6 +1,21 @@
 const RESEND_URL = 'https://api.resend.com/emails';
 
+function isSupportEmailEnabled() {
+  return String(process.env.SUPPORT_TICKET_EMAIL_ENABLED || 'false').toLowerCase() === 'true';
+}
+
 async function sendEmailToAdmins(admins, ticketData) {
+  // For Power Automate Desktop flow we keep backend email disabled by default
+  // to avoid duplicate notifications from both backend and PAD.
+  if (!isSupportEmailEnabled()) {
+    return {
+      ok: false,
+      skipped: true,
+      reason: 'disabled_by_config',
+      provider: 'none',
+    };
+  }
+
   if (!process.env.RESEND_API_KEY) {
     console.error('[email] Missing RESEND_API_KEY');
     return { ok: false, reason: 'missing_resend_env' };
